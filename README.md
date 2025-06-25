@@ -38,3 +38,24 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+// ==================== VTEX-like Next.js Project (with Dynamic Product Page) ====================
+// NOTE: Este proyecto está estructurado pensando en migración a VTEX IO.
+// Guía de migración a VTEX IO:
+// 1. Cada componente de carpeta `components/blocks` (HeroBanner, CategoryGrid, ProductShelf,
+//    BenefitsSection, InfoBar) debe copiarse a `react/` dentro de tu app VTEX IO.
+// 2. Crea `store/blocks.json` con declaraciones de bloques, por ejemplo:
+//    {
+//      "hero-banner": { "component": "HeroBanner", "props": { "title": ..., "image": ... } },
+//      "category-grid": { "component": "CategoryGrid" },
+//      "product-shelf": { "component": "ProductShelf" },
+//      "benefits-section": { "component": "BenefitsSection" },
+//      "info-bar": { "component": "InfoBar" }
+//    }
+// 3. En `react/index.ts`, exporta todos los componentes:
+//    export { default as HeroBanner } from './HeroBanner'
+//    export { default as CategoryGrid } from './CategoryGrid'
+//    ...
+// 4. Las páginas dinámicas en Next.js (`pages/product/[id].tsx`) se migran como módulos de página,
+//    pero en VTEX IO deberás usar `store.product` y bloques `product-summary` para PDP.
+// 5. Ajusta estilos y utilidades de Tailwind a `vtex.styleguide` o CSS Modules si prefieres.
+// -----------------------------------------------------------------------------
