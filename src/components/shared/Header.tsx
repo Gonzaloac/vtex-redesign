@@ -106,38 +106,35 @@ export default function Header() {
       </div>
 
       {/* Mobile Header: Hamburguesa, Logo, Acciones */}
-      <div className="md:hidden bg-white flex items-center justify-between px-4 py-3 shadow-sm">
-        <div className="w-10">
-          <button onClick={() => setMobileOpen(!mobileOpen)} aria-label="Abrir menú">
-            <Menu size={24} />
-          </button>
+      <div className="md:hidden bg-white flex flex-col shadow-sm">
+        {/* Primera fila: Menú, Logo, Acciones */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="w-10">
+            <button onClick={() => setMobileOpen(!mobileOpen)} aria-label="Abrir menú">
+              <Menu size={24} />
+            </button>
+          </div>
+          <div className="flex-1 flex justify-center items-center">
+            <Link href="/" className="flex justify-center">
+              <Image src="/logo.svg" alt="Organa" width={120} height={42} />
+            </Link>
+          </div>
+          <div className="w-10 flex items-center gap-4 justify-end">
+            <button aria-label="Mi cuenta">
+              <User size={20} />
+            </button>
+            <CartButton mobile iconSize={20} />
+          </div>
         </div>
-        <div className="flex-1 flex justify-center items-center">
-          <Link href="/" className="flex justify-center">
-            <Image src="/logo.svg" alt="Organa" width={120} height={42} />
-          </Link>
-        </div>
-        <div className="w-10 flex items-center gap-4 justify-end">
-          <button aria-label="Buscar" onClick={() => setMobileSearchOpen(true)}>
-            <Search size={20} />
-          </button>
-          <button aria-label="Mi cuenta">
-            <User size={20} />
-          </button>
-          <CartButton mobile iconSize={20} />
-        </div>
-      </div>
-
-      {/* Mobile Search Bar */}
-      {mobileSearchOpen && (
-        <div className="md:hidden bg-white p-4 shadow-md">
+        
+        {/* Segunda fila: Barra de búsqueda siempre visible */}
+        <div className="bg-white px-4 py-2 border-t border-gray-100">
           <div className="relative">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
                 if (q.trim()) {
                   router.push(`/search?q=${encodeURIComponent(q.trim())}`)
-                  setMobileSearchOpen(false)
                   setShowResults(false)
                 }
               }}
@@ -148,7 +145,6 @@ export default function Header() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="¿Qué estás buscando hoy?"
                 className="border border-green-600 rounded-l-md px-4 py-2 text-[14px] focus:outline-none focus:ring-1 focus:ring-green-600 flex-grow"
-                autoFocus
                 onFocus={() => q.trim().length >= 2 && setShowResults(true)}
               />
               <button
@@ -185,7 +181,6 @@ export default function Header() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setShowResults(false);
-                                setMobileSearchOpen(false);
                                 setTimeout(() => {
                                   router.push(`/product/${product.id}`);
                                 }, 10);
@@ -216,7 +211,6 @@ export default function Header() {
                       className="text-green-600 hover:text-green-700 text-[14px] font-medium flex items-center justify-center w-full"
                       onClick={() => {
                         setShowResults(false)
-                        setMobileSearchOpen(false)
                       }}
                     >
                       Ver todos los resultados
@@ -227,7 +221,7 @@ export default function Header() {
             )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Mobile Nav Drawer */}
       {mobileOpen && (
@@ -259,7 +253,7 @@ export default function Header() {
         {/* Logo a la izquierda */}
         <div className="flex items-center w-1/4">
           <Link href="/" className="flex">
-            <Image src="/logo.svg" alt="Organa" width={150} height={52} priority />
+            <Image src="/logo.svg" alt="Organa" width={170} height={60} priority />
           </Link>
         </div>
 
@@ -357,27 +351,27 @@ export default function Header() {
         </div>
 
         {/* Acciones a la derecha */}
-        <div className="flex items-center gap-5 justify-end w-1/4">
-          <div className="flex items-center gap-2">
-            <Headphones size={18} className="text-green-600" />
-            <div className="text-[15px]">
-              <p className="font-semibold">+51 932 321 295</p>
-              <p className="text-gray-500 text-[13px]">Atención 9 AM–6 PM</p>
+        <div className="flex items-center gap-3 lg:gap-5 justify-end w-1/4">
+          <div className="flex items-center gap-1 lg:gap-2">
+            <Headphones size={18} className="text-green-600 hidden sm:block" />
+            <div className="text-[13px] lg:text-[15px]">
+              <p className="font-semibold whitespace-nowrap">+51 932 321 295</p>
+              <p className="text-gray-500 text-[11px] lg:text-[13px] whitespace-nowrap">Atención 9 AM–6 PM</p>
+            </div>
+          </div>
+          <span className="w-px h-6 bg-gray-300 hidden sm:block" />
+          <div className="flex items-center gap-1 lg:gap-2">
+            <Truck size={18} className="text-green-600 hidden sm:block" />
+            <div className="text-[13px] lg:text-[15px]">
+              <p className="font-semibold whitespace-nowrap">Envíos</p>
+              <p className="text-gray-500 text-[11px] lg:text-[13px] whitespace-nowrap">Delivery a todo el Perú</p>
             </div>
           </div>
           <span className="w-px h-6 bg-gray-300" />
-          <div className="flex items-center gap-2">
-            <Truck size={18} className="text-green-600" />
-            <div className="text-[15px]">
-              <p className="font-semibold">Envíos</p>
-              <p className="text-gray-500 text-[13px]">Delivery a todo el Perú</p>
-            </div>
-          </div>
-          <span className="w-px h-6 bg-gray-300" />
-          <button aria-label="Mi cuenta">
-            <User size={20} />
+          <button aria-label="Mi cuenta" className="hover:text-green-600 transition-colors">
+            <User size={24} strokeWidth={1.75} />
           </button>
-          <CartButton iconSize={20} />
+          <CartButton iconSize={24} />
         </div>
       </div>
 
