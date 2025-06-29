@@ -1,8 +1,9 @@
 // -----------------------------------------------------------------------------
 // 8. components/blocks/InfoBar.tsx
 // -----------------------------------------------------------------------------
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Truck, Headphones, CreditCard, Package } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface InfoItem {
   id: number
@@ -19,17 +20,81 @@ const infoItems: InfoItem[] = [
 ]
 
 export default function InfoBar() {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    // Activar las animaciones cuando el componente se monta
+    setIsVisible(true);
+  }, []);
+
+  // Variantes para las animaciones del contenedor
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.2, // Retraso entre cada elemento hijo
+      },
+    },
+  };
+
+  // Variantes para las animaciones de cada elemento
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.6,
+        ease: "easeOut"
+      } 
+    },
+  };
+
+  // Variantes para el icono
+  const iconVariants = {
+    hover: { 
+      scale: 1.1,
+      rotate: [0, 5, -5, 0], // Pequeña oscilación
+      transition: { 
+        duration: 0.5,
+        ease: "easeInOut",
+        repeat: 0
+      } 
+    },
+  };
+
   return (
-    <section className="bg-green-600 py-10 lg:py-12">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-white text-center">
+    <section className="bg-green-600 py-10 lg:py-12 overflow-hidden">
+      <motion.div 
+        className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-white text-center"
+        initial="hidden"
+        animate={isVisible ? "visible" : "hidden"}
+        variants={containerVariants}
+      >
         {infoItems.map(item => (
-          <div key={item.id} className="flex flex-col items-center gap-3">
-            {item.icon}
-            <h4 className="font-semibold text-[18px] leading-snug">{item.title}</h4>
-            <p className="text-[18px] leading-snug font-light">{item.subtitle}</p>
-          </div>
+          <motion.div 
+            key={item.id} 
+            className="flex flex-col items-center gap-3 p-4 rounded-lg hover:bg-green-500 transition-colors duration-300 cursor-pointer"
+            variants={itemVariants}
+            whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+          >
+            <motion.div 
+              variants={iconVariants}
+              whileHover="hover"
+              className="bg-green-500 hover:bg-green-400 p-3 rounded-full transition-colors duration-300"
+            >
+              {item.icon}
+            </motion.div>
+            <motion.h4 
+              className="font-semibold text-[18px] leading-snug mt-2"
+              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+            >
+              {item.title}
+            </motion.h4>
+            <p className="text-[16px] leading-snug font-light">{item.subtitle}</p>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   )
 }

@@ -8,6 +8,7 @@ import { IoMdAdd, IoMdRemove } from 'react-icons/io'
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5'
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5'
 import { useCart } from '@/context/CartContext'
+import { useWishlist } from '@/context/WishlistContext'
 import Link from 'next/link'
 
 // Componente para mostrar las estrellas de calificación
@@ -126,36 +127,38 @@ const getRelatedProducts = (currentProductId: number, count: number = 4) => {
 };
 
 export default function ProductPage({ product }: { product: Product | null }) {
+  if (!product) return <Layout><p>Producto no encontrado</p></Layout>
+
+  const { addToCart } = useCart()
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const [quantity, setQuantity] = useState(1)
-  const [activeAccordion, setActiveAccordion] = useState('description');
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const { addToCart } = useCart();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+  const [touchStartX, setTouchStartX] = useState(0)
+  const [touchEndX, setTouchEndX] = useState(0)
+  const [activeAccordion, setActiveAccordion] = useState('description')
   
-  // Estado para reseñas y formulario
+  // Estado para las reseñas
   const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      name: 'Carlos M.',
-      rating: 5,
-      comment: 'Excelente producto, lo uso todos los días y me siento mejor.',
-    },
-    {
-      id: 2,
-      name: 'Ana P.',
-      rating: 4,
-      comment: 'Buena relación calidad-precio, lo recomiendo.',
-    },
-    {
-      id: 3,
-      name: 'Luis R.',
-      rating: 5,
-      comment: 'Llegó rápido y en buen estado, muy satisfecho con mi compra.',
-    },
+    { id: 1, name: "María G.", rating: 5, comment: "Excelente producto, me ha ayudado mucho con mi problema de insomnio. Lo recomiendo totalmente." },
+    { id: 2, name: "Juan P.", rating: 4, comment: "Buen producto, tarda un poco en hacer efecto pero funciona bien." },
+    { id: 3, name: "Carlos M.", rating: 5, comment: "Increíble calidad y el envío fue muy rápido. Definitivamente compraré más." }
   ])
   const [reviewName, setReviewName] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
+  
+  // Verificar si el producto está en la lista de deseos
+  const inWishlist = isInWishlist(product.id.toString())
+  
+  // Función para alternar el estado de la lista de deseos
+  const toggleWishlist = () => {
+    if (inWishlist) {
+      removeFromWishlist(product.id.toString())
+    } else {
+      addToWishlist(product.id.toString())
+    }
+  }
 
   // Crear un array de imágenes a partir de la imagen principal y las adicionales
   const allImages = product?.images 
@@ -412,17 +415,36 @@ export default function ProductPage({ product }: { product: Product | null }) {
                     <IoMdAdd />
                   </button>
                 </div>
-                <button 
-                  onClick={handleAddToCart}
-                  className="bg-[#16a34a] hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-md flex-grow flex items-center justify-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="9" cy="21" r="1"></circle>
-                    <circle cx="20" cy="21" r="1"></circle>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                  </svg>
-                  <span>Añadir al carrito</span>
-                </button>
+                <div className="flex-grow flex gap-2">
+                  <button 
+                    onClick={handleAddToCart}
+                    className="bg-[#16a34a] hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-md flex-grow flex items-center justify-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span>Añadir al carrito</span>
+                  </button>
+                  
+                  {/* Botón de lista de deseos */}
+                  <button 
+                    onClick={toggleWishlist}
+                    className={`border ${inWishlist ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-red-300 hover:bg-red-50'} rounded-md p-3 transition-all flex items-center justify-center`}
+                    aria-label={inWishlist ? "Quitar de favoritos" : "Añadir a favoritos"}
+                  >
+                    {inWishlist ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-red-500">
+                        <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-5.201-3.893 7.929 7.929 0 01-2.365-5.273c0-3.183 2.58-5.766 5.762-5.766 1.56 0 3.05.645 4.13 1.78 1.08-1.135 2.57-1.78 4.13-1.78 3.183 0 5.762 2.583 5.762 5.766 0 1.936-.87 3.778-2.365 5.273a15.247 15.247 0 01-5.201 3.893l-.022.012-.007.003-.002.001a.75.75 0 01-.704 0l-.002-.001z" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-gray-500 hover:text-red-500">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 4.471 3.269 6.715 5.636 8.25C10.69 18.061 12 19.2 12 19.2s1.31-1.139 3.364-2.7C17.731 14.965 21 12.721 21 8.25z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button className="w-full bg-black hover:bg-gray-800 text-white font-semibold px-8 py-3 rounded-md mb-4">
@@ -530,31 +552,65 @@ export default function ProductPage({ product }: { product: Product | null }) {
       <div className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold mb-10">Productos relacionados</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {getRelatedProducts(product?.id || 0).map(relatedProduct => (
-            <Link 
-              key={relatedProduct.id} 
-              href={`/product/${relatedProduct.id}`} 
-              className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
-            >
-              <div className="p-4 flex items-center justify-center" style={{ height: '200px' }}>
-                <img 
-                  src={relatedProduct.image} 
-                  alt={relatedProduct.title} 
-                  className="max-h-full max-w-full object-contain" 
-                />
+          {getRelatedProducts(product?.id || 0).map(relatedProduct => {
+            const relatedProductId = relatedProduct.id.toString();
+            const isRelatedInWishlist = isInWishlist(relatedProductId);
+            
+            const handleWishlistClick = (e: React.MouseEvent) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              if (isRelatedInWishlist) {
+                removeFromWishlist(relatedProductId);
+              } else {
+                addToWishlist(relatedProductId);
+              }
+            };
+            
+            return (
+              <div key={relatedProduct.id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative">
+                {/* Botón de wishlist */}
+                <button 
+                  onClick={handleWishlistClick}
+                  className="absolute top-2 right-2 z-10 bg-white rounded-full p-1.5 shadow-md hover:shadow-lg transition-all"
+                  aria-label={isRelatedInWishlist ? "Quitar de favoritos" : "Añadir a favoritos"}
+                >
+                  {isRelatedInWishlist ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-500">
+                      <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-5.201-3.893 7.929 7.929 0 01-2.365-5.273c0-3.183 2.58-5.766 5.762-5.766 1.56 0 3.05.645 4.13 1.78 1.08-1.135 2.57-1.78 4.13-1.78 3.183 0 5.762 2.583 5.762 5.766 0 1.936-.87 3.778-2.365 5.273a15.247 15.247 0 01-5.201 3.893l-.022.012-.007.003-.002.001a.75.75 0 01-.704 0l-.002-.001z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500 hover:text-red-500">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 4.471 3.269 6.715 5.636 8.25C10.69 18.061 12 19.2 12 19.2s1.31-1.139 3.364-2.7C17.731 14.965 21 12.721 21 8.25z" />
+                    </svg>
+                  )}
+                </button>
+                
+                <Link 
+                  href={`/product/${relatedProduct.id}`} 
+                  className="block"
+                >
+                  <div className="p-4 flex items-center justify-center" style={{ height: '200px' }}>
+                    <img 
+                      src={relatedProduct.image} 
+                      alt={relatedProduct.title} 
+                      className="max-h-full max-w-full object-contain" 
+                    />
+                  </div>
+                  <div className="p-4 border-t">
+                    <p className="text-sm text-gray-500 mb-1">{relatedProduct.subtitle}</p>
+                    <h3 className="font-semibold mb-2 line-clamp-2">{relatedProduct.title}</h3>
+                    <p className="text-green-600 font-bold text-lg">
+                      S/ {relatedProduct.discount 
+                        ? (relatedProduct.price * (1 - relatedProduct.discount / 100)).toFixed(2)
+                        : relatedProduct.price.toFixed(2)
+                      }
+                    </p>
+                  </div>
+                </Link>
               </div>
-              <div className="p-4 border-t">
-                <p className="text-sm text-gray-500 mb-1">{relatedProduct.subtitle}</p>
-                <h3 className="font-semibold mb-2 line-clamp-2">{relatedProduct.title}</h3>
-                <p className="text-green-600 font-bold text-lg">
-                  S/ {relatedProduct.discount 
-                    ? (relatedProduct.price * (1 - relatedProduct.discount / 100)).toFixed(2)
-                    : relatedProduct.price.toFixed(2)
-                  }
-                </p>
-              </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
 

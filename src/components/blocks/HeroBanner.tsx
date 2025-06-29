@@ -21,15 +21,15 @@ const defaultSlides: SlideProps[] = [
     title: "",
     subtitle: "",
     image: "/banner-organa.jpg",
-    mobileImage: "/banner-organa.jpg",
+    mobileImage: "/Banner-principal-Invierno-moviles-1.png",
     ctaText: "",
     ctaLink: ""
   },
   {
     title: "",
     subtitle: "",
-    image: "/banner-organa.jpg",
-    mobileImage: "/banner-organa.jpg",
+    image: "/Banner-principal-Organa-1.png",
+    mobileImage: "/Banner-principal-Organa-moviles-1.png",
     ctaText: "",
     ctaLink: "/categorias/suplementos"
   },
@@ -107,7 +107,7 @@ export default function HeroBanner({ slides = defaultSlides }: Props) {
     <section className="relative w-full overflow-hidden">
       {/* Contenedor del slider */}
       <div 
-        className="relative w-full min-h-[400px] md:min-h-[550px] transition-transform duration-500 ease-in-out"
+        className="relative w-full min-h-[550px] md:min-h-[550px] transition-transform duration-500 ease-in-out"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

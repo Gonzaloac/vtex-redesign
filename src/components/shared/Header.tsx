@@ -8,11 +8,21 @@ import {
   Truck,
   ShoppingCart,
   ChevronDown,
+  ChevronRight,
   User,
   Menu,
   Search,
   X,
+  Heart,
+  Home,
+  Pill,
+  Dumbbell,
+  Store,
+  Snowflake,
+  ShowerHead,
+  Tag
 } from 'lucide-react'
+import { useWishlist } from '@/context/WishlistContext'
 import CartButton from '@/components/cart/CartButton'
 import CartSidebar from '@/components/cart/CartSidebar'
 import MegaMenuVitaminas from '@/components/nav/MegaMenuVitaminas'
@@ -123,6 +133,9 @@ export default function Header() {
             <button aria-label="Mi cuenta">
               <User size={20} />
             </button>
+            <Link href="/wishlist" aria-label="Mi lista de deseos">
+              <Heart size={20} className="text-gray-700 hover:text-red-500 transition-colors" />
+            </Link>
             <CartButton mobile iconSize={20} />
           </div>
         </div>
@@ -223,28 +236,159 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Nav Drawer */}
+      {/* Mobile Nav Drawer - Ocupa toda la altura */}
       {mobileOpen && (
-        <div className="md:hidden bg-white shadow-lg">
-          <ul className="flex flex-col gap-4 p-4">
-            {NAV.map((item) => (
-              <li key={item} className="flex items-center gap-2 text-gray-800 hover:text-green-600 text-[14px]">
-                <Link href={item === 'Inicio' ? '/' : `/categorias/${slugify(item)}`} className="flex items-center gap-2">
-                  {item}
-                  {(item === 'Vitaminas' || item === 'Suplementos' || item === 'Abarrotes' || item === 'Refrigerados y congelados' || item === 'Cuidado Personal') && (
-                    <ChevronDown size={14} />
-                  )}
+        <div className="md:hidden fixed top-0 left-0 w-full h-screen bg-white shadow-lg z-50 flex flex-col">
+          {/* Cabecera del menú con botón de cierre */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <div className="flex items-center">
+              <Image src="/logo.svg" alt="Organa" width={120} height={42} />
+            </div>
+            <button 
+              onClick={() => setMobileOpen(false)} 
+              className="text-gray-700 p-2"
+              aria-label="Cerrar menú"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          
+          {/* Contenido del menú con scroll */}
+          <div className="flex-grow overflow-y-auto py-2">
+            <ul className="flex flex-col">
+              {/* Inicio */}
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Home size={20} className="text-green-600" />
+                    <span>Inicio</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
                 </Link>
               </li>
-            ))}
-            
-            {/* Elemento Promociones destacado en móvil al final */}
-            <li className="flex items-center mt-2">
-              <Link href="/promociones" className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md transition-colors flex items-center gap-1 w-full text-center justify-center text-[14px]">
-                <span>Promociones</span>
-              </Link>
-            </li>
-          </ul>
+              
+              {/* Vitaminas */}
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/categorias/vitaminas" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Pill size={20} className="text-green-600" />
+                    <span>Vitaminas</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </li>
+              
+              {/* Suplementos */}
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/categorias/suplementos" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Dumbbell size={20} className="text-green-600" />
+                    <span>Suplementos</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </li>
+              
+              {/* Abarrotes */}
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/categorias/abarrotes" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Store size={20} className="text-green-600" />
+                    <span>Abarrotes</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </li>
+              
+              {/* Refrigerados y congelados */}
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/categorias/refrigerados-congelados" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Snowflake size={20} className="text-green-600" />
+                    <span>Refrigerados y congelados</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </li>
+              
+              {/* Cuidado Personal */}
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/categorias/cuidado-personal" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShowerHead size={20} className="text-green-600" />
+                    <span>Cuidado Personal</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </li>
+              
+              {/* Promociones */}
+              <li className="border-b border-gray-100">
+                <Link 
+                  href="/promociones" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Tag size={20} className="text-green-600" />
+                    <span className="text-green-600 font-medium">Promociones</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </li>
+              
+              {/* Mi Lista de Deseos */}
+              <li>
+                <Link 
+                  href="/wishlist" 
+                  className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Heart size={20} className="text-red-500" />
+                    <span>Mi Lista de Deseos</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Footer del menú */}
+          <div className="p-4 border-t border-gray-100">
+            <Link 
+              href="/mi-cuenta" 
+              className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md"
+              onClick={() => setMobileOpen(false)}
+            >
+              <User size={20} className="text-gray-700" />
+              <span className="font-medium">Mi Cuenta</span>
+            </Link>
+          </div>
         </div>
       )}
 
@@ -371,6 +515,9 @@ export default function Header() {
           <button aria-label="Mi cuenta" className="hover:text-green-600 transition-colors">
             <User size={24} strokeWidth={1.75} />
           </button>
+          <Link href="/wishlist" aria-label="Mi lista de deseos" className="hover:text-red-500 transition-colors">
+            <Heart size={24} strokeWidth={1.75} />
+          </Link>
           <CartButton iconSize={24} />
         </div>
       </div>
