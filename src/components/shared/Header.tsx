@@ -61,7 +61,9 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState<typeof products>([])
   const [showResults, setShowResults] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const [expandedMobileMenus, setExpandedMobileMenus] = useState<string[]>([])
 
   // Cerrar resultados de búsqueda al hacer clic fuera
   useEffect(() => {
@@ -69,13 +71,30 @@ export default function Header() {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false)
       }
+      
+      // Close mobile menu when clicking outside
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node) && mobileOpen) {
+        setMobileOpen(false)
+      }
     }
     
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [])
+  }, [mobileOpen])
+  
+  // Close mobile menu on route change
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setMobileOpen(false)
+    }
+    
+    router.events.on('routeChangeStart', handleRouteChange)
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange)
+    }
+  }, [router])
 
   // Buscar productos mientras el usuario escribe
   useEffect(() => {
@@ -222,9 +241,7 @@ export default function Header() {
                     <Link 
                       href={`/search?q=${encodeURIComponent(q.trim())}`}
                       className="text-green-600 hover:text-green-700 text-[14px] font-medium flex items-center justify-center w-full"
-                      onClick={() => {
-                        setShowResults(false)
-                      }}
+                      onClick={() => setShowResults(false)}
                     >
                       Ver todos los resultados
                     </Link>
@@ -238,7 +255,10 @@ export default function Header() {
 
       {/* Mobile Nav Drawer - Ocupa toda la altura */}
       {mobileOpen && (
-        <div className="md:hidden fixed top-0 left-0 w-full h-screen bg-white shadow-lg z-50 flex flex-col">
+        <div 
+          ref={mobileMenuRef} 
+          className="md:hidden fixed top-0 left-0 w-full h-screen bg-white shadow-lg z-50 flex flex-col"
+        >
           {/* Cabecera del menú con botón de cierre */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <div className="flex items-center">
@@ -267,87 +287,252 @@ export default function Header() {
                     <Home size={20} className="text-green-600" />
                     <span>Inicio</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
                 </Link>
               </li>
               
               {/* Vitaminas */}
               <li className="border-b border-gray-100">
-                <Link 
-                  href="/categorias/vitaminas" 
+                <button 
+                  onClick={() => {
+                    if (expandedMobileMenus.includes('Vitaminas')) {
+                      setExpandedMobileMenus(expandedMobileMenus.filter(item => item !== 'Vitaminas'))
+                    } else {
+                      setExpandedMobileMenus([...expandedMobileMenus, 'Vitaminas'])
+                    }
+                  }} 
                   className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
-                  onClick={() => setMobileOpen(false)}
                 >
                   <div className="flex items-center gap-3">
                     <Pill size={20} className="text-green-600" />
                     <span>Vitaminas</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
-                </Link>
+                  {expandedMobileMenus.includes('Vitaminas') ? 
+                    <ChevronDown size={18} className="text-gray-400" /> : 
+                    <ChevronRight size={18} className="text-gray-400" />
+                  }
+                </button>
+                {expandedMobileMenus.includes('Vitaminas') && (
+                  <div className="bg-gray-50 py-2 px-4">
+                    <ul className="space-y-4">
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Vitaminas</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/vitaminas/vitamina-b" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Vitamina B</Link></li>
+                          <li><Link href="/categorias/vitaminas/vitamina-c" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Vitamina C</Link></li>
+                          <li><Link href="/categorias/vitaminas/vitamina-d" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Vitamina D</Link></li>
+                          <li><Link href="/categorias/vitaminas/multivitaminas" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Multivitaminas</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Bienestar</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/vitaminas/omegas" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Omegas</Link></li>
+                          <li><Link href="/categorias/vitaminas/antioxidantes" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Antioxidantes</Link></li>
+                          <li><Link href="/categorias/vitaminas/antiestres-sueno" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Antiestrés y Sueño</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <Link href="/categorias/vitaminas" className="text-green-700 font-semibold text-[14px]" onClick={() => setMobileOpen(false)}>Ver todo</Link>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </li>
               
               {/* Suplementos */}
               <li className="border-b border-gray-100">
-                <Link 
-                  href="/categorias/suplementos" 
+                <button 
+                  onClick={() => {
+                    if (expandedMobileMenus.includes('Suplementos')) {
+                      setExpandedMobileMenus(expandedMobileMenus.filter(item => item !== 'Suplementos'))
+                    } else {
+                      setExpandedMobileMenus([...expandedMobileMenus, 'Suplementos'])
+                    }
+                  }} 
                   className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
-                  onClick={() => setMobileOpen(false)}
                 >
                   <div className="flex items-center gap-3">
                     <Dumbbell size={20} className="text-green-600" />
                     <span>Suplementos</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
-                </Link>
+                  {expandedMobileMenus.includes('Suplementos') ? 
+                    <ChevronDown size={18} className="text-gray-400" /> : 
+                    <ChevronRight size={18} className="text-gray-400" />
+                  }
+                </button>
+                {expandedMobileMenus.includes('Suplementos') && (
+                  <div className="bg-gray-50 py-2 px-4">
+                    <ul className="space-y-4">
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Proteínas</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/suplementos/proteina-whey" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Proteína Whey</Link></li>
+                          <li><Link href="/categorias/suplementos/proteina-vegana" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Proteína Vegana</Link></li>
+                          <li><Link href="/categorias/suplementos/proteina-isolada" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Proteína Isolada</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Rendimiento</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/suplementos/pre-entreno" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Pre-entreno</Link></li>
+                          <li><Link href="/categorias/suplementos/creatina" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Creatina</Link></li>
+                          <li><Link href="/categorias/suplementos/bcaa" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>BCAA</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <Link href="/categorias/suplementos" className="text-green-700 font-semibold text-[14px]" onClick={() => setMobileOpen(false)}>Ver todo</Link>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </li>
               
               {/* Abarrotes */}
               <li className="border-b border-gray-100">
-                <Link 
-                  href="/categorias/abarrotes" 
+                <button 
+                  onClick={() => {
+                    if (expandedMobileMenus.includes('Abarrotes')) {
+                      setExpandedMobileMenus(expandedMobileMenus.filter(item => item !== 'Abarrotes'))
+                    } else {
+                      setExpandedMobileMenus([...expandedMobileMenus, 'Abarrotes'])
+                    }
+                  }} 
                   className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
-                  onClick={() => setMobileOpen(false)}
                 >
                   <div className="flex items-center gap-3">
                     <Store size={20} className="text-green-600" />
                     <span>Abarrotes</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
-                </Link>
+                  {expandedMobileMenus.includes('Abarrotes') ? 
+                    <ChevronDown size={18} className="text-gray-400" /> : 
+                    <ChevronRight size={18} className="text-gray-400" />
+                  }
+                </button>
+                {expandedMobileMenus.includes('Abarrotes') && (
+                  <div className="bg-gray-50 py-2 px-4">
+                    <ul className="space-y-4">
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Cereales</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/abarrotes/avena" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Avena</Link></li>
+                          <li><Link href="/categorias/abarrotes/granola" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Granola</Link></li>
+                          <li><Link href="/categorias/abarrotes/quinua" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Quinua</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Snacks</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/abarrotes/frutos-secos" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Frutos Secos</Link></li>
+                          <li><Link href="/categorias/abarrotes/barras" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Barras</Link></li>
+                          <li><Link href="/categorias/abarrotes/chips" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Chips</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <Link href="/categorias/abarrotes" className="text-green-700 font-semibold text-[14px]" onClick={() => setMobileOpen(false)}>Ver todo</Link>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </li>
               
               {/* Refrigerados y congelados */}
               <li className="border-b border-gray-100">
-                <Link 
-                  href="/categorias/refrigerados-congelados" 
+                <button 
+                  onClick={() => {
+                    if (expandedMobileMenus.includes('Refrigerados y congelados')) {
+                      setExpandedMobileMenus(expandedMobileMenus.filter(item => item !== 'Refrigerados y congelados'))
+                    } else {
+                      setExpandedMobileMenus([...expandedMobileMenus, 'Refrigerados y congelados'])
+                    }
+                  }} 
                   className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
-                  onClick={() => setMobileOpen(false)}
                 >
                   <div className="flex items-center gap-3">
                     <Snowflake size={20} className="text-green-600" />
                     <span>Refrigerados y congelados</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
-                </Link>
+                  {expandedMobileMenus.includes('Refrigerados y congelados') ? 
+                    <ChevronDown size={18} className="text-gray-400" /> : 
+                    <ChevronRight size={18} className="text-gray-400" />
+                  }
+                </button>
+                {expandedMobileMenus.includes('Refrigerados y congelados') && (
+                  <div className="bg-gray-50 py-2 px-4">
+                    <ul className="space-y-4">
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Refrigerados</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/refrigerados/leches-vegetales" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Leches Vegetales</Link></li>
+                          <li><Link href="/categorias/refrigerados/yogures" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Yogures</Link></li>
+                          <li><Link href="/categorias/refrigerados/quesos" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Quesos</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Congelados</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/congelados/frutas" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Frutas</Link></li>
+                          <li><Link href="/categorias/congelados/verduras" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Verduras</Link></li>
+                          <li><Link href="/categorias/congelados/proteinas" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Proteínas</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <Link href="/categorias/refrigerados-congelados" className="text-green-700 font-semibold text-[14px]" onClick={() => setMobileOpen(false)}>Ver todo</Link>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </li>
               
               {/* Cuidado Personal */}
               <li className="border-b border-gray-100">
-                <Link 
-                  href="/categorias/cuidado-personal" 
+                <button 
+                  onClick={() => {
+                    if (expandedMobileMenus.includes('Cuidado Personal')) {
+                      setExpandedMobileMenus(expandedMobileMenus.filter(item => item !== 'Cuidado Personal'))
+                    } else {
+                      setExpandedMobileMenus([...expandedMobileMenus, 'Cuidado Personal'])
+                    }
+                  }} 
                   className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
-                  onClick={() => setMobileOpen(false)}
                 >
                   <div className="flex items-center gap-3">
                     <ShowerHead size={20} className="text-green-600" />
                     <span>Cuidado Personal</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
-                </Link>
+                  {expandedMobileMenus.includes('Cuidado Personal') ? 
+                    <ChevronDown size={18} className="text-gray-400" /> : 
+                    <ChevronRight size={18} className="text-gray-400" />
+                  }
+                </button>
+                {expandedMobileMenus.includes('Cuidado Personal') && (
+                  <div className="bg-gray-50 py-2 px-4">
+                    <ul className="space-y-4">
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Cuidado Facial</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/cuidado-personal/limpiadores" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Limpiadores</Link></li>
+                          <li><Link href="/categorias/cuidado-personal/cremas" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Cremas</Link></li>
+                          <li><Link href="/categorias/cuidado-personal/mascarillas" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Mascarillas</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <p className="font-bold text-gray-900 text-[14px] mb-1">Cuidado Corporal</p>
+                        <ul className="space-y-2 pl-3">
+                          <li><Link href="/categorias/cuidado-personal/jabones" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Jabones</Link></li>
+                          <li><Link href="/categorias/cuidado-personal/lociones" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Lociones</Link></li>
+                          <li><Link href="/categorias/cuidado-personal/desodorantes" className="text-gray-700 hover:text-green-600 text-[14px]" onClick={() => setMobileOpen(false)}>Desodorantes</Link></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <Link href="/categorias/cuidado-personal" className="text-green-700 font-semibold text-[14px]" onClick={() => setMobileOpen(false)}>Ver todo</Link>
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </li>
               
               {/* Promociones */}
-              <li className="border-b border-gray-100">
+              <li>
                 <Link 
                   href="/promociones" 
                   className="flex items-center justify-between p-4 text-gray-800 hover:text-green-600 active:bg-gray-50 text-[16px]"
@@ -357,7 +542,6 @@ export default function Header() {
                     <Tag size={20} className="text-green-600" />
                     <span className="text-green-600 font-medium">Promociones</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
                 </Link>
               </li>
               
@@ -372,7 +556,6 @@ export default function Header() {
                     <Heart size={20} className="text-red-500" />
                     <span>Mi Lista de Deseos</span>
                   </div>
-                  <ChevronRight size={18} className="text-gray-400" />
                 </Link>
               </li>
             </ul>
@@ -388,6 +571,24 @@ export default function Header() {
               <User size={20} className="text-gray-700" />
               <span className="font-medium">Mi Cuenta</span>
             </Link>
+            
+            {/* Enlaces de contacto y tiendas (Mobile) */}
+            <div className="mt-4 flex flex-col gap-2">
+              <Link 
+                href="/contacto" 
+                className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md"
+                onClick={() => setMobileOpen(false)}
+              >
+                <span className="font-medium">CONTÁCTANOS</span>
+              </Link>
+              <Link 
+                href="/tiendas" 
+                className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md"
+                onClick={() => setMobileOpen(false)}
+              >
+                <span className="font-medium">NUESTRAS TIENDAS</span>
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -526,42 +727,54 @@ export default function Header() {
       <div className="relative">
         <nav className="hidden md:block bg-[#fafafa] border-t border-gray-100 text-[14px] font-semibold">
           <div className="container mx-auto px-6 py-3">
-            <ul className="flex flex-wrap items-center gap-8">
-              {/* Resto del menú */}
-              {NAV.map((item) =>
-                item === 'Vitaminas' || item === 'Suplementos' || item === 'Abarrotes' || item === 'Refrigerados y congelados' || item === 'Cuidado Personal' ? (
-                  <li
-                    key={item}
-                    className="relative"
-                    onMouseEnter={() => setActiveMenu(item)}
-                  >
-                    <Link href={`/categorias/${slugify(item)}`} className="flex items-center gap-1 cursor-pointer hover:text-green-600 text-[14px]">
-                      <span>{item}</span>
-                      <ChevronDown size={14} className="mt-[2px]" />
-                    </Link>
-                  </li>
-                ) : (
-                  <li
-                    key={item}
-                    className="flex items-center gap-1 cursor-pointer hover:text-green-600 text-[14px]"
-                  >
-                    <Link href={item === 'Inicio' ? '/' : `/categorias/${slugify(item)}`}>
-                      {item}
-                      {item !== 'Inicio' && (
+            <div className="flex items-center justify-between">
+              <ul className="flex flex-wrap items-center gap-8">
+                {/* Resto del menú */}
+                {NAV.map((item) =>
+                  item === 'Vitaminas' || item === 'Suplementos' || item === 'Abarrotes' || item === 'Refrigerados y congelados' || item === 'Cuidado Personal' ? (
+                    <li
+                      key={item}
+                      className="relative"
+                      onMouseEnter={() => setActiveMenu(item)}
+                    >
+                      <Link href={`/categorias/${slugify(item)}`} className="flex items-center gap-1 cursor-pointer hover:text-green-600 text-[14px]">
+                        <span>{item}</span>
                         <ChevronDown size={14} className="mt-[2px]" />
-                      )}
-                    </Link>
-                  </li>
-                )
-              )}
+                      </Link>
+                    </li>
+                  ) : (
+                    <li
+                      key={item}
+                      className="flex items-center gap-1 cursor-pointer hover:text-green-600 text-[14px]"
+                    >
+                      <Link href={item === 'Inicio' ? '/' : `/categorias/${slugify(item)}`}>
+                        {item}
+                        {item !== 'Inicio' && (
+                          <ChevronDown size={14} className="mt-[2px]" />
+                        )}
+                      </Link>
+                    </li>
+                  )
+                )}
+                
+                {/* Elemento Promociones destacado al final */}
+                <li>
+                  <Link href="/promociones" className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md transition-colors flex items-center gap-1">
+                    <span>Promociones</span>
+                  </Link>
+                </li>
+              </ul>
               
-              {/* Elemento Promociones destacado al final */}
-              <li>
-                <Link href="/promociones" className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md transition-colors flex items-center gap-1">
-                  <span>Promociones</span>
+              {/* Enlaces de contacto y tiendas */}
+              <div className="flex items-center gap-8">
+                <Link href="/contacto" className="text-[14px] hover:text-green-600 transition-colors">
+                  <span>CONTÁCTANOS</span>
                 </Link>
-              </li>
-            </ul>
+                <Link href="/tiendas" className="text-[14px] hover:text-green-600 transition-colors">
+                  <span>NUESTRAS TIENDAS</span>
+                </Link>
+              </div>
+            </div>
           </div>
         </nav>
 

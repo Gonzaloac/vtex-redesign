@@ -22,6 +22,9 @@ export interface Product {
     ingredients?: string[]
     usageInstructions?: string
     additionalInfo?: string
+    rating?: number
+    reviews?: number
+    category?: string
   }
   
   export const products: Product[] = [
@@ -30,6 +33,7 @@ export interface Product {
       title: 'Citrato de Magnesio Smart Blends 400gr', 
       subtitle: 'Smartblend', 
       price: 84.9, 
+      discount: 25,
       image: '/Citrato-Recomendado-1.png',
       images: [
         '/162143-1200-auto.png',
@@ -66,6 +70,7 @@ export interface Product {
       title: 'Ashwagandha 60 Caps Vegana', 
       subtitle: 'Herbals & Health', 
       price: 69.9, 
+      discount: 20,
       image: '/161711-1200-auto.png',
       images: [
         '/161711-300-300.png',
@@ -103,6 +108,7 @@ export interface Product {
       title: 'Resveratrol BioCenter 100 Caps', 
       subtitle: 'BioCenter', 
       price: 72.9, 
+      discount: 30,
       image: '/REVERATROL-CAP.png',
       description: 'El Resveratrol de BioCenter es un potente antioxidante que ayuda a combatir el envejecimiento celular y promueve la salud cardiovascular.',
       features: [
@@ -276,6 +282,7 @@ export interface Product {
       title: 'Citrato de Magnesio Smart Blends 200gr', 
       subtitle: 'Smartblend', 
       price: 44.9, 
+      discount: 20,
       image: '/162143-1200-auto.png',
       description: 'Versión compacta del popular Suplemento Citrato de Magnesio Smart Blends. Ideal para quienes buscan probar el producto o para viajes.',
       features: [

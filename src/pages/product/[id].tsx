@@ -3,6 +3,8 @@ import { GetStaticPaths, GetStaticProps } from 'next'
 import { useState, useRef, useEffect } from 'react'
 import Layout from '@/components/layout/Layout'
 import { products, Product } from '@/data/products'
+import ErrorBoundary from '@/components/shared/ErrorBoundary'
+import ProductErrorFallback from '@/components/product/ProductErrorFallback'
 import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa'
 import { IoMdAdd, IoMdRemove } from 'react-icons/io'
 import { IoChevronDownOutline, IoChevronUpOutline } from 'react-icons/io5'
@@ -10,6 +12,7 @@ import { IoChevronBack, IoChevronForward } from 'react-icons/io5'
 import { useCart } from '@/context/CartContext'
 import { useWishlist } from '@/context/WishlistContext'
 import Link from 'next/link'
+import ComplementaryProducts from '@/components/product/ComplementaryProducts'
 
 // Componente para mostrar las estrellas de calificación
 const RatingStars = ({ rating = 4.5, reviews = 6 }) => {
@@ -36,7 +39,14 @@ const RatingStars = ({ rating = 4.5, reviews = 6 }) => {
 }
 
 // Componente de Acordeón
-const AccordionItem = ({ title, children, isOpen, toggleAccordion }) => {
+interface AccordionItemProps {
+  title: string;
+  children: React.ReactNode;
+  isOpen: boolean;
+  toggleAccordion: () => void;
+}
+
+const AccordionItem = ({ title, children, isOpen, toggleAccordion }: AccordionItemProps) => {
   return (
     <div className="border-b border-gray-200">
       <button 
@@ -58,7 +68,20 @@ const AccordionItem = ({ title, children, isOpen, toggleAccordion }) => {
 }
 
 // Componente para mostrar la información nutricional
-const NutritionalInfo = ({ info }) => {
+interface NutritionalInfoProps {
+  info: {
+    servingSize: string;
+    servingsPerContainer: number;
+    calories: number;
+    protein: number;
+    totalFat: number;
+    totalCarbs: number;
+    sugars: number;
+    sodium: number;
+  }
+}
+
+const NutritionalInfo = ({ info }: NutritionalInfoProps) => {
   if (!info) return null;
   
   return (
@@ -102,12 +125,16 @@ const NutritionalInfo = ({ info }) => {
 };
 
 // Componente para mostrar los ingredientes
-const IngredientsList = ({ ingredients }) => {
+interface IngredientsListProps {
+  ingredients: string[];
+}
+
+const IngredientsList = ({ ingredients }: IngredientsListProps) => {
   if (!ingredients || ingredients.length === 0) return null;
   
   return (
-    <ul className="list-disc pl-5 text-sm">
-      {ingredients.map((ingredient, index) => (
+    <ul className="list-disc pl-5 text-sm space-y-1">
+      {ingredients.map((ingredient: string, index: number) => (
         <li key={index} className="mb-1">{ingredient}</li>
       ))}
     </ul>
@@ -115,7 +142,7 @@ const IngredientsList = ({ ingredients }) => {
 };
 
 // Función para obtener productos relacionados de forma determinista
-const getRelatedProducts = (currentProductId: number, count: number = 4) => {
+const getRelatedProducts = (currentProductId: number, count: number = 4): Product[] => {
   // Filtrar el producto actual
   const otherProducts = products.filter(p => p.id !== currentProductId);
   
@@ -126,7 +153,25 @@ const getRelatedProducts = (currentProductId: number, count: number = 4) => {
   return sortedProducts.slice(0, count);
 };
 
-export default function ProductPage({ product }: { product: Product | null }) {
+// Función para obtener productos complementarios para "Haz tu compra aún mejor"
+const getComplementaryProducts = (currentProductId: number, count: number = 3): Product[] => {
+  // En un caso real, esto podría ser basado en datos de compras conjuntas
+  // Por ahora, simplemente seleccionamos productos diferentes a los relacionados
+  const relatedIds = getRelatedProducts(currentProductId, 4).map(p => p.id);
+  
+  // Filtrar productos que no sean el actual ni estén en los relacionados
+  const filtered = products.filter(
+    p => p.id !== currentProductId && !relatedIds.includes(p.id)
+  );
+  
+  // Ordenar por precio (de menor a mayor) para sugerir complementos accesibles
+  const sorted = [...filtered].sort((a, b) => a.price - b.price);
+  
+  // Tomar los primeros 'count' productos
+  return sorted.slice(0, count);
+};
+
+function ProductPage({ product }: { product: Product | null }) {
   if (!product) return <Layout><p>Producto no encontrado</p></Layout>
 
   const { addToCart } = useCart()
@@ -185,7 +230,7 @@ export default function ProductPage({ product }: { product: Product | null }) {
     return <Layout><p>Producto no encontrado</p></Layout>
   }
   
-  const toggleAccordion = (section) => {
+  const toggleAccordion = (section: string) => {
     setActiveAccordion(activeAccordion === section ? '' : section);
   };
 
@@ -224,17 +269,17 @@ export default function ProductPage({ product }: { product: Product | null }) {
     );
   };
   
-  const goToImage = (index) => {
+  const goToImage = (index: number) => {
     setCurrentImageIndex(index);
   };
 
   // Función para manejar el swipe en dispositivos móviles
-  const handleTouchStart = (e) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     const touchDown = e.touches[0].clientX;
     document.documentElement.style.setProperty('--touch-start-x', `${touchDown}px`);
   };
   
-  const handleTouchMove = (e) => {
+  const handleTouchMove = (e: React.TouchEvent) => {
     if (!document.documentElement.style.getPropertyValue('--touch-start-x')) return;
     
     const touchDown = parseFloat(document.documentElement.style.getPropertyValue('--touch-start-x'));
@@ -454,7 +499,7 @@ export default function ProductPage({ product }: { product: Product | null }) {
               <div className="mt-6 bg-[#e6f0eb] rounded-lg p-4 flex items-center justify-center">
                 <div className="text-center">
                   <h4 className="font-semibold mb-1">Pruébalo y, si no te gusta, ¡te devolvemos el dinero!</h4>
-                  <p className="text-sm">Más del 98% de quienes probaron este producto quedaron muy satisfechos con el sabor y los resultados. ¡Recuérdalo por 30 días!</p>
+                  <p className="mt-2">Más del 98% de quienes probaron este producto quedaron muy satisfechos con el sabor y los resultados. ¡Recuérdalo por 30 días!</p>
                 </div>
               </div>
               
@@ -465,6 +510,15 @@ export default function ProductPage({ product }: { product: Product | null }) {
                   src="/Metodos-de-Pago-Mercado-Pago-1.avif"
                   alt="Métodos de pago"
                   className="mx-auto max-h-12 w-auto"
+                />
+              </div>
+
+              {/* Sección "¡Haz tu compra aún mejor!" */}
+              <div className="mt-6 bg-[#f9f8f5] rounded-lg p-6">
+                <h4 className="font-semibold mb-4">¡Haz tu compra aún mejor!</h4>
+                <ComplementaryProducts 
+                  mainProduct={product} 
+                  complementaryProducts={getComplementaryProducts(product.id)} 
                 />
               </div>
 
@@ -626,7 +680,7 @@ export default function ProductPage({ product }: { product: Product | null }) {
               type="text"
               placeholder="Tu nombre"
               value={reviewName}
-              onChange={(e) => setReviewName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReviewName(e.target.value)}
               className="border border-gray-300 rounded-md px-4 py-2 w-full focus:ring-green-500 focus:border-green-500"
               required
             />
@@ -643,10 +697,17 @@ export default function ProductPage({ product }: { product: Product | null }) {
           <textarea
             placeholder="Escribe tu comentario..."
             value={reviewComment}
-            onChange={(e) => setReviewComment(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReviewComment(e.target.value)}
             className="border border-gray-300 rounded-md px-4 py-2 w-full h-28 resize-none focus:ring-green-500 focus:border-green-500"
-            required
           />
+          <div className="mt-8">
+            <button
+              onClick={handleAddToCart}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-md w-full transition-colors"
+            >
+              Añadir al carrito
+            </button>
+          </div>
           <button
             type="submit"
             className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md"
@@ -661,7 +722,7 @@ export default function ProductPage({ product }: { product: Product | null }) {
               <div className="flex items-center mb-2">
                 <p className="font-semibold mr-3">{review.name}</p>
                 {/* Usamos RatingStars para mostrar la calificación */}
-                <RatingStars rating={review.rating} reviews={0} />
+                <RatingStars rating={review.rating} reviews={0 as any} />
               </div>
               <p className="text-gray-700">{review.comment}</p>
             </div>
@@ -672,6 +733,17 @@ export default function ProductPage({ product }: { product: Product | null }) {
     </Layout>
   )
 }
+
+// Componente envuelto con ErrorBoundary específico para productos
+const ProductPageWithErrorBoundary = ({ product }: { product: Product | null }) => {
+  return (
+    <ErrorBoundary fallback={<ProductErrorFallback />}>
+      <ProductPage product={product} />
+    </ErrorBoundary>
+  )
+}
+
+export default ProductPageWithErrorBoundary
 
 export const getStaticPaths: GetStaticPaths = () => ({
   paths: products.map(p => ({ params: { id: p.id.toString() } })),

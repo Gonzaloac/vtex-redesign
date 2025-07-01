@@ -6,10 +6,11 @@ import HeroBanner from '@/components/blocks/HeroBanner'
 import CategoryGrid from '@/components/blocks/CategoryGrid'
 import ProductShelf from '@/components/blocks/ProductShelf'
 import BenefitsSection from '@/components/blocks/BenefitsSection'
+import ImmuneDefenseSection from '@/components/blocks/ImmuneDefenseSection'
 import SleepRelaxSection from '@/components/blocks/SleepRelaxSection'
 import DigestionWellnessSection from '@/components/blocks/DigestionWellnessSection'
 import InfoBar from '@/components/blocks/InfoBar'
-import PromotionTimer from '@/components/blocks/PromotionTimer'
+import FlashSaleSection from '@/components/blocks/FlashSaleSection'
 import BrandsCarousel from '@/components/blocks/BrandsCarousel'
 
 export default function Home() {
@@ -28,17 +29,14 @@ export default function Home() {
         ctaLink="#"
       />
 
-      {/* Temporizador de promociones */}
-      <PromotionTimer 
-        endDate={promotionEndDate}
-        title="¡Ofertas especiales por tiempo limitado!"
-        subtitle="Aprovecha estos descuentos exclusivos en productos seleccionados"
-      />
+      {/* Sección de ofertas relámpago */}
+      <FlashSaleSection endDate={promotionEndDate} />
 
       {/* Sección de categorías resaltadas */}
       <CategoryGrid />
       <ProductShelf />
       <BenefitsSection />
+      <ImmuneDefenseSection />
       <InfoBar />  {/* Nueva sección de info */}
       <SleepRelaxSection />
       <DigestionWellnessSection />

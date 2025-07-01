@@ -62,7 +62,7 @@ export default function BenefitsSection() {
             {benefits.map((item, index) => (
               <div 
                 key={item.id} 
-                className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-auto snap-center"
+                className="relative rounded-lg overflow-hidden flex-shrink-0 w-full sm:w-auto snap-center transition-transform hover:scale-[1.02] duration-200 cursor-pointer"
               >
                 <img
                   src={item.image}

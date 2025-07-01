@@ -296,13 +296,6 @@ const CartSidebar: React.FC = () => {
             >
               Finalizar compra
             </Link>
-            
-            <button 
-              onClick={closeCart}
-              className="block w-full text-center py-2 px-4 mt-2 text-sm text-gray-600 hover:text-gray-800"
-            >
-              Continuar comprando
-            </button>
           </div>
         )}
       </div>

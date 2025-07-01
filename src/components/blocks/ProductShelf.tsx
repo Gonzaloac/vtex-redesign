@@ -43,33 +43,42 @@ export default function ProductShelf() {
     const discounted = calculateDiscountedPrice(prod.price, prod.discount)
     return (
       <Link key={prod.id} href={`/product/${prod.id}`} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg hover:border-2 hover:border-green-600 transition-all duration-300 flex flex-col h-full">
-        <div className="relative p-3 flex-grow flex items-center justify-center" style={{ height: '280px' }}>
+        <div className="relative p-2 md:p-3 flex-grow flex items-center justify-center aspect-square">
           <img src={prod.image} alt={prod.title} className="w-full h-full object-contain" />
           {prod.discount && (
-            <span className="absolute top-3 right-3 bg-green-600 text-white text-sm font-semibold px-2.5 py-1 rounded-md">
+            <span className="absolute top-2 right-2 bg-green-600 text-white text-xs md:text-sm font-semibold px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md">
               -{prod.discount}%
             </span>
           )}
         </div>
-        <div className="p-5 pt-2 flex flex-col justify-between" style={{ minHeight: '220px' }}>
+        <div className="p-3 md:p-5 pt-1 md:pt-2 flex flex-col justify-between">
           <div>
-            <p className="text-sm text-gray-500 uppercase mb-1.5">{prod.subtitle}</p>
-            <h3 className="text-base sm:text-lg font-semibold mb-2.5 line-clamp-2 min-h-[3rem]">{prod.title}</h3>
+            <p className="text-xs md:text-sm text-gray-500 uppercase mb-0.5 md:mb-1.5">{prod.subtitle}</p>
+            <h3 className="text-sm md:text-lg font-semibold mb-1.5 md:mb-2.5 line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">{prod.title}</h3>
           </div>
           <div className="mt-auto">
-            <div className="flex items-center gap-2.5 mb-3.5">
+            <div className="flex items-center gap-1.5 md:gap-2.5 mb-2 md:mb-3.5">
               {prod.discount ? (
                 <> 
-                  <p className="text-gray-500 text-sm line-through">S/ {prod.price.toFixed(2)}</p>
-                  <p className="text-green-600 text-xl font-bold">S/ {discounted.toFixed(2)}</p>
+                  <p className="text-gray-500 text-xs md:text-sm line-through">S/ {prod.price.toFixed(2)}</p>
+                  <p className="text-green-600 text-base md:text-xl font-bold">S/ {discounted.toFixed(2)}</p>
                 </>
               ) : (
-                <p className="text-green-600 text-xl font-bold mb-3.5">S/ {prod.price.toFixed(2)}</p>
+                <p className="text-green-600 text-base md:text-xl font-bold mb-2 md:mb-3.5">S/ {prod.price.toFixed(2)}</p>
               )}
             </div>
             
-            {/* Íconos de disponibilidad */}
-            <div className="flex items-center gap-3 mb-3 flex-wrap">
+            {/* Íconos de disponibilidad - compacto en móvil, original en desktop */}
+            <div className="md:hidden flex items-center text-xs text-gray-600 mb-2">
+              <Truck size={12} className="text-green-600 mr-0.5" />
+              <span>Delivery</span>
+              <span className="mx-1">·</span>
+              <Store size={12} className="text-green-600 mr-0.5" />
+              <span>Recojo</span>
+            </div>
+            
+            {/* Versión desktop con el estilo original */}
+            <div className="hidden md:flex items-center gap-3 mb-3 flex-wrap">
               <div className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-1.5 rounded-md">
                 <Truck size={16} className="text-green-600" />
                 <span className="text-xs font-medium">Delivery</span>
@@ -80,7 +89,7 @@ export default function ProductShelf() {
               </div>
             </div>
             
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white text-base font-semibold py-2.5 rounded-md transition-colors">
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white text-xs md:text-base font-semibold py-1.5 md:py-2.5 rounded-md transition-colors">
               Agregar al carrito
             </button>
           </div>
@@ -92,7 +101,7 @@ export default function ProductShelf() {
   return (
     <section className="py-16 bg-[#f9f8f5]">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12">Los más vendidos</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-12">Los más vendidos</h2>
         
         {/* Grid para móvil (2 columnas) y desktop (4 columnas) */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
