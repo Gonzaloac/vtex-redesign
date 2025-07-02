@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { X, Plus, Minus, ShoppingBag, AlertCircle, Heart } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag, AlertCircle, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { products } from '@/data/products';
 
@@ -23,6 +23,8 @@ const CartSidebar: React.FC = () => {
   const [recentlyAdded, setRecentlyAdded] = useState<{[id: string]: boolean}>({});
   // Referencia al carrito previo para detectar nuevos productos
   const prevCartRef = useRef<typeof cart>([]);
+  // Estado para el carousel de productos sugeridos
+  const [currentSlide, setCurrentSlide] = useState(0);
   
   // Efecto para controlar la animación cuando cambia isCartOpen
   useEffect(() => {
@@ -69,19 +71,19 @@ const CartSidebar: React.FC = () => {
     prevCartRef.current = [...cart];
   }, [cart]);
 
-  // Seleccionar 2 productos aleatorios para upsell
+  // Seleccionar productos aleatorios para upsell
   const suggestedProducts = useMemo(() => {
     // Filtrar productos que ya están en el carrito
     const cartProductIds = cart.map(item => item.id);
     const availableProducts = products.filter(product => !cartProductIds.includes(product.id.toString()));
     
     // Si no hay suficientes productos disponibles, devolver un array vacío
-    if (availableProducts.length < 2) return [];
+    if (availableProducts.length < 1) return [];
     
-    // Barajar el array y tomar los primeros 2 elementos
+    // Barajar el array y tomar hasta 5 elementos
     return [...availableProducts]
       .sort(() => 0.5 - Math.random())
-      .slice(0, 2)
+      .slice(0, 5)
       .map(product => ({
         id: product.id.toString(),
         name: product.title,
@@ -100,6 +102,17 @@ const CartSidebar: React.FC = () => {
     });
   };
 
+  // Auto-rotación del carousel
+  useEffect(() => {
+    if (suggestedProducts.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev === suggestedProducts.length - 1 ? 0 : prev + 1));
+    }, 3000); // Cambiar cada 3 segundos
+    
+    return () => clearInterval(interval);
+  }, [suggestedProducts.length]);
+
   // Si el carrito no está visible, no renderizamos nada
   if (!isCartOpen && !isVisible) return null;
 
@@ -115,99 +128,87 @@ const CartSidebar: React.FC = () => {
       
       {/* Panel lateral del carrito con animación de deslizamiento */}
       <div 
-        className={`fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-xl z-50 flex flex-col 
-          transition-all duration-500 ease-in-out ${
-          isCartOpen 
-            ? 'translate-x-0 scale-100 opacity-100 animate-slideInRight' 
-            : 'translate-x-full scale-95 opacity-0'
-        }`}
+        className={`fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-xl z-50 transition-transform duration-500 ease-in-out transform ${
+          isCartOpen ? 'translate-x-0' : 'translate-x-full'
+        } flex flex-col`}
       >
-        {/* Cabecera del carrito con animación */}
-        <div className={`flex items-center justify-between p-4 border-b border-gray-200 
-          ${isCartOpen ? 'animate-fadeIn' : ''}`}>
-          <div className="flex items-center gap-2">
-            <ShoppingBag size={20} className={`text-green-600 ${isCartOpen ? 'animate-bounce' : ''}`} />
-            <h2 className="font-semibold text-lg">Mi Carrito</h2>
-            <span className={`bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full ${
-              isCartOpen ? 'animate-fadeIn' : ''
-            }`}>
-              {totalItems} {totalItems === 1 ? 'item' : 'items'}
-            </span>
+        {/* Encabezado del carrito */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center">
+            <ShoppingBag size={20} className="text-green-600 mr-2" />
+            <h2 className="font-bold text-lg">Mi Carrito</h2>
+            {totalItems > 0 && (
+              <span className="ml-2 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {totalItems} items
+              </span>
+            )}
           </div>
           <button 
             onClick={closeCart}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-gray-500 hover:text-gray-700"
             aria-label="Cerrar carrito"
           >
-            <X size={20} />
+            <X size={24} />
           </button>
         </div>
         
         {/* Contenido del carrito */}
-        <div className="flex-grow overflow-y-auto p-4">
+        <div className="flex-grow overflow-y-auto">
           {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <div className="bg-gray-100 p-4 rounded-full mb-4">
-                <ShoppingBag size={32} className="text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-800 mb-2">Tu carrito está vacío</h3>
-              <p className="text-gray-500 mb-6">Agrega productos para comenzar tu compra</p>
+            <div className="flex flex-col items-center justify-center h-full p-4">
+              <ShoppingBag size={64} className="text-gray-300 mb-4" />
+              <p className="text-gray-500 text-center mb-2">Tu carrito está vacío</p>
+              <p className="text-gray-400 text-sm text-center mb-6">Agrega productos para comenzar tu compra</p>
               <button 
                 onClick={closeCart}
-                className="bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-md transition-colors"
+                className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors"
               >
-                Explorar productos
+                Seguir comprando
               </button>
             </div>
           ) : (
             <ul className="divide-y divide-gray-200">
-              {cart.map((item) => (
-                <li 
-                  key={item.id} 
-                  className={`py-4 transition-all duration-500 ${
-                    recentlyAdded[item.id] ? 'bg-green-50 rounded-lg animate-pulse' : ''
-                  }`}
-                >
-                  <div className={`flex items-start gap-3 ${
-                    recentlyAdded[item.id] ? 'animate-scaleUp' : ''
-                  }`}>
+              {cart.map(item => (
+                <li key={item.id} className={`p-4 ${recentlyAdded[item.id] ? 'bg-green-50 animate-pulse' : ''}`}>
+                  <div className="flex gap-3">
                     {/* Imagen del producto */}
-                    <div className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                      <Image 
+                    <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
+                      <img 
                         src={item.image} 
                         alt={item.name} 
-                        width={80} 
-                        height={80} 
-                        className="object-cover w-full h-full"
+                        className="w-full h-full object-contain p-1" 
                       />
                     </div>
                     
                     {/* Detalles del producto */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 line-clamp-2">{item.name}</h4>
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <span className="font-medium text-gray-900">
-                          S/ {item.price.toFixed(2)}
-                        </span>
+                    <div className="flex-grow">
+                      <h3 className="font-medium text-gray-900 mb-1 line-clamp-2">{item.name}</h3>
+                      
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-green-600 font-medium">S/ {item.price.toFixed(2)}</span>
                       </div>
                       
-                      {/* Controles de cantidad */}
-                      <div className="mt-2 flex items-center gap-2">
+                      <div className="flex justify-between items-center">
+                        {/* Control de cantidad */}
                         <div className="flex items-center border border-gray-300 rounded-md">
                           <button 
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="p-1 text-gray-500 hover:text-gray-700"
+                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                            className="px-2 py-1 text-gray-500 hover:bg-gray-100"
                             aria-label="Disminuir cantidad"
                           >
-                            <Minus size={14} />
+                            <Minus size={16} />
                           </button>
-                          <span className="px-2 py-1 text-sm">{item.quantity}</span>
+                          
+                          <span className="px-2 py-1 min-w-[30px] text-center">
+                            {item.quantity}
+                          </span>
+                          
                           <button 
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-1 text-gray-500 hover:text-gray-700"
+                            className="px-2 py-1 text-gray-500 hover:bg-gray-100"
                             aria-label="Aumentar cantidad"
                           >
-                            <Plus size={14} />
+                            <Plus size={16} />
                           </button>
                         </div>
                         
@@ -236,65 +237,89 @@ const CartSidebar: React.FC = () => {
         
         {/* Productos sugeridos (upsell) */}
         {cart.length > 0 && suggestedProducts.length > 0 && (
-          <div className="border-t border-gray-200 p-4">
-            <h3 className="font-medium text-gray-900 mb-3">Complementa tu compra</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {suggestedProducts.map((product) => (
-                <div key={product.id} className="border border-gray-200 rounded-lg p-2 relative hover:shadow-md transition-shadow">
-                  <button 
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                    aria-label="Favorito"
-                  >
-                    <Heart size={16} />
-                  </button>
-                  <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 mb-2">
-                      <Image 
-                        src={product.image} 
-                        alt={product.name} 
-                        width={64} 
-                        height={64} 
-                        className="object-contain w-full h-full"
-                      />
+          <div className="border-t border-gray-200 p-3 max-h-[20%]">
+            <h3 className="font-medium text-gray-900 text-sm mb-2">Complementa tu compra</h3>
+            <div className="relative">
+              {/* Carousel de productos sugeridos (uno a la vez) */}
+              <div className="h-[80px] relative">
+                {suggestedProducts.length > 0 && (
+                  <div className="w-full border border-gray-200 rounded-lg p-2">
+                    <div className="flex items-center gap-3">
+                      {/* Imagen del producto */}
+                      <div className="w-16 h-16 flex-shrink-0">
+                        <img 
+                          src={suggestedProducts[currentSlide].image} 
+                          alt={suggestedProducts[currentSlide].name}
+                          className="object-contain w-full h-full"
+                        />
+                      </div>
+                      
+                      {/* Información del producto */}
+                      <div className="flex-grow">
+                        <div className="text-xs text-gray-500 uppercase">ORGANA</div>
+                        <h4 className="text-sm font-medium line-clamp-2 mb-1">{suggestedProducts[currentSlide].name}</h4>
+                        <div className="font-bold text-green-600">S/ {suggestedProducts[currentSlide].price.toFixed(2)}</div>
+                      </div>
+                      
+                      {/* Botón de agregar */}
+                      <button 
+                        onClick={() => handleAddSuggested(suggestedProducts[currentSlide])}
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs py-1.5 px-2 rounded transition-colors whitespace-nowrap"
+                      >
+                        AGREGAR
+                      </button>
                     </div>
-                    <div className="text-xs text-gray-500 uppercase mb-1">{product.subtitle}</div>
-                    <h4 className="text-xs font-medium text-center line-clamp-2 mb-1">{product.name}</h4>
-                    <div className="font-medium text-sm mb-2">S/ {product.price.toFixed(2)}</div>
-                    <button 
-                      onClick={() => handleAddSuggested(product)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white text-xs py-1 px-2 rounded transition-colors"
-                    >
-                      AGREGAR
-                    </button>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
+              
+              {/* Indicadores de posición del carousel */}
+              <div className="flex justify-center mt-2 space-x-1">
+                {suggestedProducts.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                      index === currentSlide ? 'bg-green-600' : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Ir al producto ${index + 1}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         )}
         
         {/* Resumen del carrito y botón de checkout */}
         {cart.length > 0 && (
-          <div className="border-t border-gray-200 p-4 bg-gray-50">
-            <div className="flex justify-between mb-2 text-sm">
+          <div className="border-t border-gray-200 p-4 bg-white shadow-inner">
+            <div className="flex justify-between mb-2">
               <span className="text-gray-600">Subtotal:</span>
               <span className="font-medium">S/ {subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between mb-4 text-sm">
+            <div className="flex justify-between mb-3">
               <span className="text-gray-600">Envío:</span>
               <span className="font-medium">Calculado al finalizar</span>
             </div>
             
-            <div className="flex items-center gap-1 text-xs text-gray-500 mb-4">
+            <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
               <AlertCircle size={14} />
               <span>Los cupones se aplicarán en el checkout</span>
             </div>
             
+            {/* Total más prominente */}
+            <div className="bg-green-50 p-3 rounded-lg shadow-sm mb-4 border border-green-100">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-800 font-bold">TOTAL:</span>
+                <span className="text-2xl font-bold text-green-600">S/ {subtotal.toFixed(2)}</span>
+              </div>
+            </div>
+            
             <Link 
-              href="/checkout" 
-              className="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 px-4 rounded-md font-medium transition-colors"
+              href="/cart" 
+              className="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 px-4 rounded-md font-bold transition-colors"
             >
-              Finalizar compra
+              Proceder al pago
             </Link>
           </div>
         )}

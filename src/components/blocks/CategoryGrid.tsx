@@ -13,10 +13,10 @@ interface Category {
 }
 
 const categories: Category[] = [
-  { id: 1, title: 'Vitaminas', image: '/Vitaminas.png', url: '/categorias/vitaminas' },
-  { id: 2, title: 'Suplementos', image: '/Suplementos.png', url: '/categorias/suplementos' },
-  { id: 3, title: 'Abarrotes', image: '/Abarrotes.png', url: '/categorias/abarrotes' },
-  { id: 4, title: 'Frescos', image: '/Frescos.png', url: '/categorias/frescos' },
+  { id: 1, title: 'Suplementos', image: '/Categorías-Suplementos-1.png', url: '/categorias/suplementos' },
+  { id: 2, title: 'Frescos', image: '/Categorías-Frescos-1.png', url: '/categorias/frescos' },
+  { id: 3, title: 'Congelados', image: '/Categorías-Congelados-1.png', url: '/categorias/congelados' },
+  { id: 4, title: 'Abarrotes', image: '/Categorías-Abarrotes-1.png', url: '/categorias/abarrotes' },
 ]
 
 export default function CategoryGrid() {

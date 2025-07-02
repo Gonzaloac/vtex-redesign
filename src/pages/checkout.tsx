@@ -1,13 +1,118 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, CreditCard, Truck, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Trash2, CreditCard, Truck, AlertCircle, MapPin, X, Check, ChevronDown, Search } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
+import SimpleLayout from '@/components/layout/SimpleLayout';
+
+// Importación dinámica de componentes de react-leaflet para evitar errores de SSR
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Popup),
+  { ssr: false }
+);
+
+// Componente para actualizar la vista del mapa cuando cambian las coordenadas
+const ChangeMapView = dynamic(
+  () => import('react-leaflet').then((mod) => {
+    // Componente personalizado para cambiar la vista del mapa
+    return ({ coords }) => {
+      const map = mod.useMap();
+      map.setView(coords, 15);
+      return null;
+    };
+  }),
+  { ssr: false }
+);
 
 const CheckoutPage: React.FC = () => {
   const { cart, removeFromCart, updateQuantity, subtotal, totalItems } = useCart();
   const router = useRouter();
+  
+  // Estados para el proceso de checkout
+  const [activeStep, setActiveStep] = useState(1); // 1: Identificación, 2: Entrega, 3: Pago
+  const [mapCoords, setMapCoords] = useState([-12.046373, -77.042755]); // Lima, Perú por defecto
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [showDeliveryOptions, setShowDeliveryOptions] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('debit'); // 'debit', 'credit', 'cash', 'yape'
+  const [formData, setFormData] = useState({
+    // Datos de identificación
+    email: 'gonzaloac24@gmail.es',
+    name: 'Gonzalo',
+    lastName: 'ALavrez',
+    documentType: 'DNI',
+    documentNumber: '71124789',
+    phone: '974857841',
+    // Datos de entrega
+    department: 'Lima',
+    province: 'Lima',
+    district: 'Miraflores',
+    address: 'Av. Arequipa 123',
+    reference: 'Cerca al parque Kennedy',
+    deliveryMethod: 'delivery',
+    // Datos de pago
+    paymentMethod: 'card'
+  });
+  
+  // Configuración del icono de Leaflet
+  useEffect(() => {
+    // Solo ejecutar en el cliente
+    if (typeof window !== "undefined") {
+      // Importar Leaflet dinámicamente
+      import('leaflet').then((L) => {
+        // Soluciona el problema del icono de marcador faltante en Leaflet con React
+        delete L.Icon.Default.prototype._getIconUrl;
+        
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+        });
+      });
+    }
+  }, []);
+  
+  // Función para geocodificar la dirección
+  const geocodeAddress = async () => {
+    if (!formData.address) return;
+    
+    setIsSearchingAddress(true);
+    
+    try {
+      // Construir la dirección completa para la búsqueda
+      const searchAddress = `${formData.address}, ${formData.district}, ${formData.province}, ${formData.department}, Perú`;
+      
+      // Usar la API de Nominatim para geocodificar la dirección
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}`);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        // Actualizar las coordenadas del mapa
+        setMapCoords([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+      } else {
+        alert('No se encontró la dirección. Por favor, intenta con otra dirección más específica.');
+      }
+    } catch (error) {
+      console.error('Error al geocodificar la dirección:', error);
+      alert('Hubo un error al buscar la dirección. Por favor, intenta de nuevo.');
+    } finally {
+      setIsSearchingAddress(false);
+    }
+  };
 
   // Si el carrito está vacío, redirigir a la página principal
   if (cart.length === 0) {
@@ -45,315 +150,832 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
+  // Función para avanzar al siguiente paso
+  const nextStep = () => {
+    if (activeStep === 1) {
+      setActiveStep(2);
+    } else if (activeStep === 2) {
+      if (!showDeliveryOptions) {
+        setShowDeliveryOptions(true);
+      } else {
+        setActiveStep(3);
+        setShowDeliveryOptions(false);
+      }
+    }
+  };
+
+  // Función para retroceder al paso anterior
+  const prevStep = (step: number) => {
+    setActiveStep(step);
+    setShowDeliveryOptions(false);
+  };
+
+  // Función para manejar cambios en los campos del formulario
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Link href="/" className="inline-flex items-center text-green-600 hover:text-green-700">
-          <ArrowLeft size={16} className="mr-2" />
-          <span>Continuar comprando</span>
-        </Link>
-      </div>
+    <SimpleLayout title="Checkout" showBackButton={false}>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <Link href="/cart" className="text-green-600 hover:text-green-700 flex items-center">
+            <ArrowLeft size={16} className="mr-1" />
+            <span>Volver a carrito</span>
+          </Link>
+        </div>
 
-      <h1 className="text-2xl md:text-3xl font-bold mb-8">Finalizar compra</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Columna izquierda: Productos */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Productos ({totalItems})</h2>
-            <ul className="divide-y divide-gray-200">
-              {cart.map((item) => (
-                <li key={item.id} className="py-6 flex flex-col sm:flex-row gap-4">
-                  <div className="w-24 h-24 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      width={96}
-                      height={96}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{item.name}</h3>
-                    <p className="text-gray-500 text-sm mt-1">SKU: {item.sku || 'N/A'}</p>
-                    
-                    <div className="mt-2 flex flex-wrap items-center gap-4">
-                      <div className="flex items-center border border-gray-300 rounded-md">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-1 text-gray-500 hover:text-gray-700"
-                          aria-label="Disminuir cantidad"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                          </svg>
-                        </button>
-                        <span className="px-3 py-1">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-1 text-gray-500 hover:text-gray-700"
-                          aria-label="Aumentar cantidad"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                          </svg>
-                        </button>
-                      </div>
-                      
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-600 hover:text-red-800 text-sm flex items-center"
-                      >
-                        <Trash2 size={14} className="mr-1" />
-                        <span>Eliminar</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">S/ {item.price.toFixed(2)}</p>
-                    {item.quantity > 1 && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        S/ {item.price.toFixed(2)} x {item.quantity}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Formulario de envío */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Truck size={20} className="mr-2 text-green-600" />
-              Información de envío
-            </h2>
-            
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label htmlFor="fullname" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  id="fullname"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Correo electrónico
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                  Dirección
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                  Ciudad
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="postal" className="block text-sm font-medium text-gray-700 mb-1">
-                  Código postal
-                </label>
-                <input
-                  type="text"
-                  id="postal"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-            </form>
-          </div>
-          
-          {/* Métodos de pago */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <CreditCard size={20} className="mr-2 text-green-600" />
-              Método de pago
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-md p-4 cursor-pointer hover:border-green-500">
-                <div className="flex items-center">
-                  <input
-                    id="card"
-                    name="payment-method"
-                    type="radio"
-                    defaultChecked
-                    className="h-4 w-4 text-green-600 focus:ring-green-500"
-                  />
-                  <label htmlFor="card" className="ml-3 block text-sm font-medium text-gray-700">
-                    Tarjeta de crédito/débito
-                  </label>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Columna izquierda: Proceso de checkout */}
+          <div className="lg:col-span-2">
+            {/* Sección de identificación */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div className="flex items-center">
+                <div className={`${activeStep === 1 ? "bg-green-600 text-white" : "bg-white border border-gray-300 text-gray-700"} w-8 h-8 rounded-full flex items-center justify-center font-semibold mr-3`}>
+                  1
                 </div>
-                
-                <div className="mt-4 grid grid-cols-1 gap-4">
+                <h2 className="text-xl font-semibold text-gray-700">Identificación</h2>
+                {activeStep > 1 && (
+                  <button 
+                    onClick={() => prevStep(1)}
+                    className="ml-auto text-green-600 hover:text-green-700 text-sm"
+                  >
+                    Editar
+                  </button>
+                )}
+              </div>
+              
+              {activeStep === 1 && (
+                <form className="space-y-4 mt-4">
                   <div>
-                    <label htmlFor="card-number" className="block text-sm font-medium text-gray-700 mb-1">
-                      Número de tarjeta
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email
                     </label>
                     <input
-                      type="text"
-                      id="card-number"
-                      placeholder="1234 5678 9012 3456"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      type="email"
+                      id="email"
+                      name="email"
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      value={formData.email}
+                      onChange={handleChange}
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-1">
-                        Fecha de expiración
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                        Nombre
                       </label>
                       <input
                         type="text"
-                        id="expiry"
-                        placeholder="MM/AA"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        id="name"
+                        name="name"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        value={formData.name}
+                        onChange={handleChange}
                       />
                     </div>
-                    
                     <div>
-                      <label htmlFor="cvc" className="block text-sm font-medium text-gray-700 mb-1">
-                        CVC
+                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                        Apellido
                       </label>
                       <input
                         type="text"
-                        id="cvc"
-                        placeholder="123"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        id="lastName"
+                        name="lastName"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        value={formData.lastName}
+                        onChange={handleChange}
                       />
                     </div>
                   </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="documentType" className="block text-sm font-medium text-gray-700">
+                        Tipo de documento
+                      </label>
+                      <select
+                        id="documentType"
+                        name="documentType"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        value={formData.documentType}
+                        onChange={handleChange}
+                      >
+                        <option value="dni">DNI</option>
+                        <option value="passport">Pasaporte</option>
+                        <option value="foreignId">Carnet de Extranjería</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="documentNumber" className="block text-sm font-medium text-gray-700">
+                        Número de documento
+                      </label>
+                      <input
+                        type="text"
+                        id="documentNumber"
+                        name="documentNumber"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                        value={formData.documentNumber}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                      Teléfono
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                      value={formData.phone}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <input
+                      id="invoice"
+                      name="invoice"
+                      type="checkbox"
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      checked={formData.invoice}
+                      onChange={(e) => setFormData({...formData, invoice: e.target.checked})}
+                    />
+                    <label htmlFor="invoice" className="ml-2 block text-sm text-gray-500">
+                      Quiero factura
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <input
+                      id="terms"
+                      name="terms"
+                      type="checkbox"
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                    />
+                    <label htmlFor="terms" className="ml-2 block text-sm text-gray-500">
+                      He leído y acepto los <span className="text-blue-500">Términos y Condiciones</span> y <span className="text-blue-500">Políticas de privacidad</span>
+                    </label>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <button
+                      type="button"
+                      className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
+                      onClick={() => setActiveStep(2)}
+                    >
+                      Ir a la entrega
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+            
+            {/* Sección de entrega - siempre visible pero contenido condicional */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div className="flex items-center">
+                <div className={`${activeStep === 2 ? "bg-green-600 text-white" : "bg-white border border-gray-300 text-gray-700"} w-8 h-8 rounded-full flex items-center justify-center font-semibold mr-3`}>
+                  2
                 </div>
+                <h2 className="text-xl font-semibold text-gray-700">Entrega</h2>
+                {activeStep > 2 && (
+                  <button 
+                    onClick={() => prevStep(2)}
+                    className="ml-auto text-green-600 hover:text-green-700 text-sm"
+                  >
+                    Editar
+                  </button>
+                )}
               </div>
               
-              <div className="border border-gray-200 rounded-md p-4 cursor-pointer hover:border-green-500">
-                <div className="flex items-center">
-                  <input
-                    id="paypal"
-                    name="payment-method"
-                    type="radio"
-                    className="h-4 w-4 text-green-600 focus:ring-green-500"
-                  />
-                  <label htmlFor="paypal" className="ml-3 block text-sm font-medium text-gray-700">
-                    PayPal
-                  </label>
+              {activeStep === 2 && (
+                <div className="mt-4">
+                  {/* Opciones de método de entrega */}
+                  <div className="mb-6">
+                    <div className="flex items-center mb-4">
+                      <input
+                        type="radio"
+                        id="delivery"
+                        name="deliveryMethod"
+                        value="delivery"
+                        checked={formData.deliveryMethod === 'delivery'}
+                        onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      />
+                      <label htmlFor="delivery" className="ml-2 block text-sm font-medium text-gray-700">
+                        Envío a domicilio
+                      </label>
+                    </div>
+                    <div className="flex items-center mb-4">
+                      <input
+                        type="radio"
+                        id="pickup"
+                        name="deliveryMethod"
+                        value="pickup"
+                        checked={formData.deliveryMethod === 'pickup'}
+                        onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})}
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                      />
+                      <label htmlFor="pickup" className="ml-2 block text-sm font-medium text-gray-700">
+                        Recoger en tienda
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {!showDeliveryOptions ? (
+                    <>
+                      {/* Mapa y campos de dirección */}
+                      <div className="mb-6">
+                        <div className="grid grid-cols-1 gap-4 mb-4">
+                          <div>
+                            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                              Dirección
+                            </label>
+                            <div className="mt-1 flex rounded-md shadow-sm">
+                              <input
+                                type="text"
+                                id="address"
+                                name="address"
+                                className="flex-1 block w-full border border-gray-300 rounded-l-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                value={formData.address}
+                                onChange={handleChange}
+                                placeholder="Ingresa tu dirección"
+                              />
+                              <button
+                                type="button"
+                                className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 rounded-r-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                onClick={geocodeAddress}
+                                disabled={isSearchingAddress || !formData.address}
+                              >
+                                {isSearchingAddress ? (
+                                  <span className="animate-spin">⌛</span>
+                                ) : (
+                                  <Search size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label htmlFor="district" className="block text-sm font-medium text-gray-700">
+                                Distrito
+                              </label>
+                              <input
+                                type="text"
+                                id="district"
+                                name="district"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                value={formData.district}
+                                onChange={handleChange}
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor="province" className="block text-sm font-medium text-gray-700">
+                                Provincia
+                              </label>
+                              <input
+                                type="text"
+                                id="province"
+                                name="province"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                value={formData.province}
+                                onChange={handleChange}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="w-full h-48 bg-gray-200 rounded-md mb-4 overflow-hidden">
+                          {typeof window !== 'undefined' && (
+                            <MapContainer 
+                              center={mapCoords} 
+                              zoom={15} 
+                              style={{ height: '100%', width: '100%' }}
+                            >
+                              <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                              />
+                              <Marker position={mapCoords}>
+                                <Popup>
+                                  {formData.address}
+                                </Popup>
+                              </Marker>
+                              <ChangeMapView coords={mapCoords} />
+                            </MapContainer>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4">Si no coincide con su dirección puede buscar otra ubicación.</p>
+                      </div>
+                      
+                      <div className="pt-4">
+                        <button
+                          type="button"
+                          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
+                          onClick={nextStep}
+                        >
+                          CONTINUAR
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="text-lg font-medium text-gray-800 mb-4">Envío</h3>
+                      
+                      <div className="flex border border-gray-300 rounded-lg overflow-hidden mb-4">
+                        <button
+                          type="button"
+                          className={`flex-1 py-3 px-4 text-center ${formData.deliveryMethod === 'delivery' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
+                          onClick={() => setFormData({...formData, deliveryMethod: 'delivery'})}
+                        >
+                          <span>Enviar</span>
+                          <span className="text-xs">a la dirección</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`flex-1 py-3 px-4 text-center ${formData.deliveryMethod === 'pickup' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
+                          onClick={() => setFormData({...formData, deliveryMethod: 'pickup'})}
+                        >
+                          <span>Recoger</span>
+                          <span className="text-xs">en la tienda</span>
+                        </button>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Método de entrega</h4>
+                        <div className="border border-gray-200 rounded-lg p-3 flex items-center">
+                          <div className="flex-shrink-0 mr-2">
+                            <input
+                              type="radio"
+                              id="regular-delivery"
+                              name="deliverySpeed"
+                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                              checked
+                              readOnly
+                            />
+                          </div>
+                          <div className="flex-grow">
+                            <label htmlFor="regular-delivery" className="block text-sm font-medium text-gray-700">
+                              Regular
+                            </label>
+                            <p className="text-xs text-gray-500">En hasta 3 días hábiles</p>
+                          </div>
+                          <div className="flex-shrink-0 text-sm font-medium">
+                            S/ 7.90
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
+                        onClick={nextStep}
+                      >
+                        IR PARA EL PAGO
+                      </button>
+                    </div>
+                  )}
                 </div>
+              )}
+            </div>
+            
+            {/* Sección de Pago */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div className="flex items-center">
+                <div className={`${activeStep === 3 ? "bg-green-600 text-white" : "bg-white border border-gray-300 text-gray-700"} w-8 h-8 rounded-full flex items-center justify-center font-semibold mr-3`}>
+                  3
+                </div>
+                <h2 className="text-xl font-semibold text-gray-700">Pago</h2>
               </div>
               
-              <div className="border border-gray-200 rounded-md p-4 cursor-pointer hover:border-green-500">
-                <div className="flex items-center">
-                  <input
-                    id="transfer"
-                    name="payment-method"
-                    type="radio"
-                    className="h-4 w-4 text-green-600 focus:ring-green-500"
-                  />
-                  <label htmlFor="transfer" className="ml-3 block text-sm font-medium text-gray-700">
-                    Transferencia bancaria
-                  </label>
+              {activeStep === 3 && (
+                <div className="mt-4">
+                  <div className="border border-green-600 rounded-lg overflow-hidden">
+                    {/* Opciones de método de pago */}
+                    <div className="grid grid-cols-4">
+                      <button
+                        type="button"
+                        className={`py-3 px-4 text-center ${paymentMethod === 'debit' ? 'bg-green-100 text-green-700 font-medium' : 'bg-white text-gray-700'}`}
+                        onClick={() => setPaymentMethod('debit')}
+                      >
+                        Tarjeta de débito
+                      </button>
+                      <button
+                        type="button"
+                        className={`py-3 px-4 text-center ${paymentMethod === 'cash' ? 'bg-green-100 text-green-700 font-medium' : 'bg-white text-gray-700'}`}
+                        onClick={() => setPaymentMethod('cash')}
+                      >
+                        Efectivo
+                      </button>
+                      <button
+                        type="button"
+                        className={`py-3 px-4 text-center ${paymentMethod === 'yape' ? 'bg-green-100 text-green-700 font-medium' : 'bg-white text-gray-700'}`}
+                        onClick={() => setPaymentMethod('yape')}
+                      >
+                        Yape
+                      </button>
+                      <button
+                        type="button"
+                        className={`py-3 px-4 text-center ${paymentMethod === 'credit' ? 'bg-green-100 text-green-700 font-medium' : 'bg-white text-gray-700'}`}
+                        onClick={() => setPaymentMethod('credit')}
+                      >
+                        Tarjeta de crédito
+                      </button>
+                    </div>
+                    
+                    {/* Contenido según método de pago seleccionado */}
+                    <div className="p-6">
+                      {paymentMethod === 'debit' && (
+                        <>
+                          <div className="space-y-4">
+                            <div>
+                              <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
+                                Número
+                              </label>
+                              <input
+                                type="text"
+                                id="cardNumber"
+                                name="cardNumber"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                placeholder="0000 0000 0000 0000"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="installments" className="block text-sm font-medium text-gray-700">
+                                Cuotas disponibles:
+                              </label>
+                              <div className="mt-1 relative">
+                                <select
+                                  id="installments"
+                                  name="installments"
+                                  className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 appearance-none"
+                                >
+                                  <option>Total - S/ 236.70</option>
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                  <ChevronDown size={16} />
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="cardName" className="block text-sm font-medium text-gray-700">
+                                Nombre y Apellido como figura en la tarjeta
+                              </label>
+                              <input
+                                type="text"
+                                id="cardName"
+                                name="cardName"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
+                                  Fecha de Vencimiento
+                                </label>
+                                <div className="mt-1 flex gap-2">
+                                  <div className="w-1/2 relative">
+                                    <select
+                                      id="expiryMonth"
+                                      name="expiryMonth"
+                                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 appearance-none"
+                                    >
+                                      <option>MM</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                      <ChevronDown size={16} />
+                                    </div>
+                                  </div>
+                                  <div className="w-1/2 relative">
+                                    <select
+                                      id="expiryYear"
+                                      name="expiryYear"
+                                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 appearance-none"
+                                    >
+                                      <option>AA</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                      <ChevronDown size={16} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <label htmlFor="securityCode" className="block text-sm font-medium text-gray-700">
+                                  Código de Seguridad
+                                </label>
+                                <input
+                                  type="text"
+                                  id="securityCode"
+                                  name="securityCode"
+                                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center">
+                              <input
+                                id="sameAddress"
+                                name="sameAddress"
+                                type="checkbox"
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                                defaultChecked
+                              />
+                              <label htmlFor="sameAddress" className="ml-2 block text-sm text-gray-700">
+                                La dirección de la factura de la tarjeta es Jirón Loreto , 587
+                              </label>
+                            </div>
+                            
+                            <div className="text-green-600 text-sm">
+                              Pagar con 2 tarjetas
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      
+                      {paymentMethod === 'credit' && (
+                        <>
+                          <div className="space-y-4">
+                            <div className="flex justify-end mb-2">
+                              <div className="flex gap-2">
+                                <img src="/tarjetas-credito-logos.png" alt="Tarjetas de crédito" className="h-6" />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
+                                Número
+                              </label>
+                              <input
+                                type="text"
+                                id="cardNumber"
+                                name="cardNumber"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                placeholder="0000 0000 0000 0000"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="installments" className="block text-sm font-medium text-gray-700">
+                                Cuotas disponibles:
+                              </label>
+                              <div className="mt-1 relative">
+                                <select
+                                  id="installments"
+                                  name="installments"
+                                  className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 appearance-none"
+                                >
+                                  <option>¿En cuántas cuotas deseas pagar?</option>
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                  <ChevronDown size={16} />
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="cardName" className="block text-sm font-medium text-gray-700">
+                                Nombre y Apellido como figura en la tarjeta
+                              </label>
+                              <input
+                                type="text"
+                                id="cardName"
+                                name="cardName"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
+                                  Fecha de Vencimiento
+                                </label>
+                                <div className="mt-1 flex gap-2">
+                                  <div className="w-1/2 relative">
+                                    <select
+                                      id="expiryMonth"
+                                      name="expiryMonth"
+                                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 appearance-none"
+                                    >
+                                      <option>MM</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                      <ChevronDown size={16} />
+                                    </div>
+                                  </div>
+                                  <div className="w-1/2 relative">
+                                    <select
+                                      id="expiryYear"
+                                      name="expiryYear"
+                                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 appearance-none"
+                                    >
+                                      <option>AA</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                      <ChevronDown size={16} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <label htmlFor="securityCode" className="block text-sm font-medium text-gray-700">
+                                  Código de Seguridad
+                                </label>
+                                <input
+                                  type="text"
+                                  id="securityCode"
+                                  name="securityCode"
+                                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center">
+                              <input
+                                id="sameAddress"
+                                name="sameAddress"
+                                type="checkbox"
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                                defaultChecked
+                              />
+                              <label htmlFor="sameAddress" className="ml-2 block text-sm text-gray-700">
+                                La dirección de la factura de la tarjeta es Jirón Loreto , 587
+                              </label>
+                            </div>
+                            
+                            <div className="text-green-600 text-sm">
+                              Pagar con 2 tarjetas
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      
+                      {paymentMethod === 'cash' && (
+                        <>
+                          <div className="py-4">
+                            <p className="text-gray-700">
+                              Después de confirmar la compra, podrá seleccionar uno de los métodos de pago en efectivo disponibles, así como visualizar cómo y dónde puede realizar el pago.
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      
+                      {paymentMethod === 'yape' && (
+                        <>
+                          <div className="flex flex-col items-center py-4">
+                            <img src="/yape-logo.png" alt="Yape" className="h-12 mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">¡Paga con Yape</h3>
+                            <p className="text-center mb-6">en pocos minutos!</p>
+                            
+                            <div className="w-full space-y-6">
+                              <div className="flex items-center">
+                                <div className="bg-purple-100 rounded-full w-6 h-6 flex items-center justify-center text-purple-600 mr-3">
+                                  1
+                                </div>
+                                <p>Al continuar, te aparecerá un formulario para completar tus datos.</p>
+                              </div>
+                              
+                              <div className="flex items-center">
+                                <div className="bg-purple-100 rounded-full w-6 h-6 flex items-center justify-center text-purple-600 mr-3">
+                                  2
+                                </div>
+                                <p>Ingresa el celular asociado a Yape y pega el código de aprobación desde la app.</p>
+                              </div>
+                              
+                              <div className="flex items-center">
+                                <div className="bg-purple-100 rounded-full w-6 h-6 flex items-center justify-center text-purple-600 mr-3">
+                                  3
+                                </div>
+                                <p>Confirma tu pago ¡y listo!</p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <div className="flex items-center">
+                      <input
+                        id="terms"
+                        name="terms"
+                        type="checkbox"
+                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
+                        He leído y acepto los <span className="text-green-600">términos y condiciones</span> y <span className="text-green-600">política de datos personales</span>.
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <button
+                      type="button"
+                      className="flex items-center text-gray-700 hover:text-gray-900"
+                      onClick={() => prevStep(2)}
+                    >
+                      <ArrowLeft size={16} className="mr-1" />
+                      <span>Volver atrás</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        </div>
-        
-        {/* Columna derecha: Resumen de compra */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-            <h2 className="text-xl font-semibold mb-4">Resumen de compra</h2>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal ({totalItems} productos)</span>
-                <span className="font-medium">S/ {subtotal.toFixed(2)}</span>
+          
+          {/* Columna derecha: Resumen de compra */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Resumen de la compra</h2>
+                <Link href="/cart" className="text-green-600 hover:text-green-700 text-sm">
+                  Volver a carrito
+                </Link>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-gray-600">Envío</span>
-                <span className="font-medium">S/ 10.00</span>
+              {/* Lista de productos en el resumen */}
+              <div className="space-y-4 mb-6">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex gap-3 pb-4 border-b border-gray-100">
+                    <div className="relative">
+                      <span className="absolute -top-1 -left-1 bg-gray-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">
+                        {item.quantity}
+                      </span>
+                      <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={64}
+                          height={64}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 line-clamp-2">{item.name}</p>
+                      <p className="text-sm font-medium text-gray-900">S/ {item.price.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
               
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total</span>
-                  <span>S/ {(subtotal + 10).toFixed(2)}</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Incluye IGV</p>
-              </div>
-              
-              <div className="pt-4">
-                <button
-                  type="button"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
-                  onClick={() => alert('¡Gracias por tu compra! Este sistema se integrará con VTEX.')}
-                >
-                  Confirmar pedido
+              {/* Código de promoción */}
+              <div className="flex gap-2 mb-6">
+                <input 
+                  type="text" 
+                  placeholder="Código" 
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <button className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium">
+                  Añadir
                 </button>
-                
-                <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                  <AlertCircle size={14} />
-                  <span>
-                    Al confirmar, aceptas nuestros términos y condiciones
-                  </span>
+              </div>
+              
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Total</span>
+                  <span className="font-medium">S/ {subtotal.toFixed(2)}</span>
                 </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 justify-center pt-4">
-                <img src="/visa.svg" alt="Visa" className="h-6" />
-                <img src="/mastercard.svg" alt="Mastercard" className="h-6" />
-                <img src="/amex.svg" alt="American Express" className="h-6" />
-                <img src="/paypal.svg" alt="PayPal" className="h-6" />
-              </div>
-              
-              <div className="bg-green-50 border border-green-200 rounded-md p-3 text-xs text-green-800 flex items-start gap-2">
-                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-                <p>
-                  Este checkout es una simulación. En la migración a VTEX, se utilizará el checkout nativo de la plataforma.
-                </p>
+                
+                <div className="pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
+                    onClick={() => alert('¡Gracias por tu compra! Este sistema se integrará con VTEX.')}
+                  >
+                    Confirmar pedido
+                  </button>
+                  
+                  <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                    <AlertCircle size={14} />
+                    <span>
+                      Al confirmar, aceptas nuestros términos y condiciones
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 justify-center pt-4">
+                  <img src="/tarjetas-credito-logos.png" alt="Tarjetas de crédito" className="h-16 w-auto max-w-[300px]" />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </SimpleLayout>
   );
 };
 

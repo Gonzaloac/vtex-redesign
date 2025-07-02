@@ -1,9 +1,10 @@
 // -----------------------------------------------------------------------------
 // 2. components/blocks/ProductShelf.tsx  (con enlaces)
 // -----------------------------------------------------------------------------
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { Truck, Store, ChevronDown } from 'lucide-react'
+import { Truck, Store, ChevronDown, Heart } from 'lucide-react'
+import { useWishlist } from '@/context/WishlistContext'
 
 interface Product {
   id: number
@@ -33,7 +34,7 @@ const calculateDiscountedPrice = (price: number, discount?: number) =>
 
 export default function ProductShelf() {
   // Estado para controlar cuántos productos mostrar en móvil
-  const [showAllMobile, setShowAllMobile] = useState(false)
+  const [showAllMobile, setShowAllMobile] = React.useState(false)
   
   // Determinar cuántos productos mostrar según el estado y el tamaño de pantalla
   const displayedProducts = showAllMobile ? products : products.slice(0, 4)
@@ -41,55 +42,70 @@ export default function ProductShelf() {
   // Renderizar un producto individual
   const renderProduct = (prod: Product) => {
     const discounted = calculateDiscountedPrice(prod.price, prod.discount)
+    const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
+    const productId = prod.id.toString()
+    
+    const handleWishlistClick = (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (isInWishlist(productId)) {
+        removeFromWishlist(productId)
+      } else {
+        addToWishlist(productId)
+      }
+    }
+    
     return (
       <Link key={prod.id} href={`/product/${prod.id}`} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg hover:border-2 hover:border-green-600 transition-all duration-300 flex flex-col h-full">
-        <div className="relative p-2 md:p-3 flex-grow flex items-center justify-center aspect-square">
+        <div className="relative p-2 flex-grow flex items-center justify-center aspect-square">
           <img src={prod.image} alt={prod.title} className="w-full h-full object-contain" />
           {prod.discount && (
-            <span className="absolute top-2 right-2 bg-green-600 text-white text-xs md:text-sm font-semibold px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md">
+            <span className="absolute top-2 right-2 bg-green-600 text-white text-xs font-semibold px-1.5 py-0.5 rounded-md">
               -{prod.discount}%
             </span>
           )}
+          {/* Botón de lista de deseos */}
+          <button 
+            onClick={handleWishlistClick}
+            className="absolute top-2 left-2 bg-white p-1.5 rounded-full shadow-sm hover:shadow-md transition-shadow"
+            aria-label={isInWishlist(productId) ? "Quitar de lista de deseos" : "Añadir a lista de deseos"}
+          >
+            <Heart 
+              size={18} 
+              className={`${isInWishlist(productId) ? "fill-red-500 text-red-500" : "text-gray-400"}`} 
+            />
+          </button>
         </div>
-        <div className="p-3 md:p-5 pt-1 md:pt-2 flex flex-col justify-between">
+        <div className="p-3 pt-1 flex flex-col justify-between">
           <div>
-            <p className="text-xs md:text-sm text-gray-500 uppercase mb-0.5 md:mb-1.5">{prod.subtitle}</p>
-            <h3 className="text-sm md:text-lg font-semibold mb-1.5 md:mb-2.5 line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">{prod.title}</h3>
+            <p className="text-xs text-gray-500 uppercase mb-0.5">{prod.subtitle}</p>
+            <h3 className="text-sm md:text-lg font-medium line-clamp-3 min-h-[2.75rem] md:min-h-[3.75rem] mb-1 md:mb-2">{prod.title}</h3>
           </div>
           <div className="mt-auto">
-            <div className="flex items-center gap-1.5 md:gap-2.5 mb-2 md:mb-3.5">
+            <div className="flex items-center gap-1.5 mb-2">
               {prod.discount ? (
                 <> 
-                  <p className="text-gray-500 text-xs md:text-sm line-through">S/ {prod.price.toFixed(2)}</p>
-                  <p className="text-green-600 text-base md:text-xl font-bold">S/ {discounted.toFixed(2)}</p>
+                  <p className="text-gray-500 text-xs line-through">S/ {prod.price.toFixed(2)}</p>
+                  <p className="text-green-600 text-base font-bold">S/ {discounted.toFixed(2)}</p>
                 </>
               ) : (
-                <p className="text-green-600 text-base md:text-xl font-bold mb-2 md:mb-3.5">S/ {prod.price.toFixed(2)}</p>
+                <p className="text-green-600 text-base font-bold mb-2">S/ {prod.price.toFixed(2)}</p>
               )}
             </div>
             
-            {/* Íconos de disponibilidad - compacto en móvil, original en desktop */}
-            <div className="md:hidden flex items-center text-xs text-gray-600 mb-2">
-              <Truck size={12} className="text-green-600 mr-0.5" />
-              <span>Delivery</span>
-              <span className="mx-1">·</span>
-              <Store size={12} className="text-green-600 mr-0.5" />
-              <span>Recojo</span>
-            </div>
-            
-            {/* Versión desktop con el estilo original */}
-            <div className="hidden md:flex items-center gap-3 mb-3 flex-wrap">
-              <div className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-1.5 rounded-md">
-                <Truck size={16} className="text-green-600" />
-                <span className="text-xs font-medium">Delivery</span>
+            {/* Íconos de disponibilidad con estilo actualizado */}
+            <div className="flex mb-2 text-sm gap-2">
+              <div className="flex items-center bg-gray-50 px-2 py-1 rounded shadow-sm">
+                <Truck size={16} className="text-green-600 mr-1" />
+                <span className="text-xs">Delivery</span>
               </div>
-              <div className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-1.5 rounded-md">
-                <Store size={16} className="text-green-600" />
-                <span className="text-xs font-medium">Recojo en tienda</span>
+              <div className="flex items-center bg-gray-50 px-2 py-1 rounded shadow-sm">
+                <Store size={16} className="text-green-600 mr-1" />
+                <span className="text-xs">Recojo en tienda</span>
               </div>
             </div>
             
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white text-xs md:text-base font-semibold py-1.5 md:py-2.5 rounded-md transition-colors">
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-3 px-4 rounded-md transition-colors">
               Agregar al carrito
             </button>
           </div>
@@ -110,9 +126,9 @@ export default function ProductShelf() {
             {displayedProducts.map(renderProduct)}
           </div>
           
-          {/* Productos para desktop - siempre mostrar todos */}
+          {/* Productos para desktop - mostrar solo 4 (1 fila) */}
           <div className="hidden md:contents">
-            {products.slice(0, 8).map(renderProduct)}
+            {products.slice(0, 4).map(renderProduct)}
           </div>
         </div>
         
@@ -128,6 +144,15 @@ export default function ProductShelf() {
             </button>
           </div>
         )}
+        
+        {/* Botón "Ver más" para desktop */}
+        <div className="mt-8 hidden md:flex justify-center">
+          <Link href="/productos">
+            <button className="bg-white border border-green-600 text-green-600 hover:bg-green-50 font-semibold px-8 py-2 rounded-full transition-colors">
+              Ver más
+            </button>
+          </Link>
+        </div>
       </div>
     </section>
   )

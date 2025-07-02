@@ -181,9 +181,9 @@ export default function Header() {
               />
               <button
                 type="submit"
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 rounded-r-md text-[14px]"
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 rounded-r-md text-[14px] flex items-center justify-center"
               >
-                Buscar
+                <Search size={18} />
               </button>
             </form>
 
@@ -624,9 +624,9 @@ export default function Header() {
               />
               <button
                 type="submit"
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 rounded-r-md text-[14px]"
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 rounded-r-md text-[14px] flex items-center justify-center"
               >
-                Buscar
+                <Search size={18} />
               </button>
             </form>
 

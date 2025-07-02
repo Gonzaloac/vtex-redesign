@@ -7,8 +7,6 @@ import CategoryGrid from '@/components/blocks/CategoryGrid'
 import ProductShelf from '@/components/blocks/ProductShelf'
 import BenefitsSection from '@/components/blocks/BenefitsSection'
 import ImmuneDefenseSection from '@/components/blocks/ImmuneDefenseSection'
-import SleepRelaxSection from '@/components/blocks/SleepRelaxSection'
-import DigestionWellnessSection from '@/components/blocks/DigestionWellnessSection'
 import InfoBar from '@/components/blocks/InfoBar'
 import FlashSaleSection from '@/components/blocks/FlashSaleSection'
 import BrandsCarousel from '@/components/blocks/BrandsCarousel'
@@ -38,8 +36,6 @@ export default function Home() {
       <BenefitsSection />
       <ImmuneDefenseSection />
       <InfoBar />  {/* Nueva sección de info */}
-      <SleepRelaxSection />
-      <DigestionWellnessSection />
       <BrandsCarousel /> {/* Carrusel de marcas */}
      
     </Layout>

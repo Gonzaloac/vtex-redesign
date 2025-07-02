@@ -3,7 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { products } from '@/data/products';
 import { useCart } from '@/context/CartContext';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Truck, Store, Heart } from 'lucide-react';
+import { useWishlist } from '@/context/WishlistContext';
 
 interface FlashSaleProps {
   endDate: Date;
@@ -11,6 +12,7 @@ interface FlashSaleProps {
 
 const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
   const { addToCart, openCart } = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [timeLeft, setTimeLeft] = useState({
@@ -103,43 +105,57 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
   return (
     <div className="bg-green-600 text-white py-6">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-6">
-          {/* Encabezado con título y temporizador en la misma línea */}
-          <div className="flex flex-col md:flex-row items-center w-full justify-between mb-4 md:mb-0">
-            {/* Logo y título */}
-            <div className="flex items-center mb-4 md:mb-0">
+        {/* Encabezado con título, temporizador y botón en la misma línea */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            {/* Título a la izquierda */}
+            <div className="flex items-center mb-4 md:mb-0 md:w-1/3">
               <div className="mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#98ce92]">
                   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                 </svg>
               </div>
-              <div className="flex flex-row items-center">
-                <h2 className="text-2xl font-bold mr-2">OFERTAS</h2>
-                <h3 className="text-xl font-bold text-yellow-400 mr-2">RELÁMPAGO</h3>
-                <div className="inline-block bg-yellow-400 text-green-800 text-xs font-bold px-2 py-1 rounded">
+              <div className="flex flex-col">
+                <div className="flex flex-row items-center">
+                  <h2 className="text-3xl md:text-4xl font-bold mr-3">OFERTAS</h2>
+                  <h3 className="text-2xl md:text-3xl font-bold text-[#98ce92] mr-3">RELÁMPAGO</h3>
+                  <div className="hidden md:inline-block bg-[#98ce92] text-green-800 text-sm font-bold px-3 py-1.5 rounded">
+                    ¡POR TIEMPO LIMITADO!
+                  </div>
+                </div>
+                <div className="md:hidden bg-[#98ce92] text-green-800 text-sm font-bold px-3 py-1.5 rounded mt-2 self-start">
                   ¡POR TIEMPO LIMITADO!
                 </div>
               </div>
             </div>
-            
-            {/* Temporizador */}
-            <div className="flex space-x-2">
-              <div className="bg-white bg-opacity-20 rounded p-2 text-center min-w-[50px]">
-                <div className="text-xl font-bold">{timeLeft.days.toString().padStart(2, '0')}</div>
-                <div className="text-xs">Días</div>
+
+            {/* Temporizador en el centro */}
+            <div className="flex mb-4 md:mb-0 md:w-1/3 justify-center">
+              <div className="flex space-x-2 md:space-x-4">
+                <div className="bg-white bg-opacity-20 rounded p-2 md:p-3 text-center min-w-[50px] md:min-w-[60px]">
+                  <div className="text-xl md:text-3xl font-bold">{timeLeft.days.toString().padStart(2, '0')}</div>
+                  <div className="text-xs md:text-sm">Días</div>
+                </div>
+                <div className="bg-white bg-opacity-20 rounded p-2 md:p-3 text-center min-w-[50px] md:min-w-[60px]">
+                  <div className="text-xl md:text-3xl font-bold">{timeLeft.hours.toString().padStart(2, '0')}</div>
+                  <div className="text-xs md:text-sm">Horas</div>
+                </div>
+                <div className="bg-white bg-opacity-20 rounded p-2 md:p-3 text-center min-w-[50px] md:min-w-[60px]">
+                  <div className="text-xl md:text-3xl font-bold">{timeLeft.minutes.toString().padStart(2, '0')}</div>
+                  <div className="text-xs md:text-sm">Minutos</div>
+                </div>
+                <div className="bg-white bg-opacity-20 rounded p-2 md:p-3 text-center min-w-[50px] md:min-w-[60px]">
+                  <div className="text-xl md:text-3xl font-bold">{timeLeft.seconds.toString().padStart(2, '0')}</div>
+                  <div className="text-xs md:text-sm">Segundos</div>
+                </div>
               </div>
-              <div className="bg-white bg-opacity-20 rounded p-2 text-center min-w-[50px]">
-                <div className="text-xl font-bold">{timeLeft.hours.toString().padStart(2, '0')}</div>
-                <div className="text-xs">Horas</div>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded p-2 text-center min-w-[50px]">
-                <div className="text-xl font-bold">{timeLeft.minutes.toString().padStart(2, '0')}</div>
-                <div className="text-xs">Minutos</div>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded p-2 text-center min-w-[50px]">
-                <div className="text-xl font-bold">{timeLeft.seconds.toString().padStart(2, '0')}</div>
-                <div className="text-xs">Segundos</div>
-              </div>
+            </div>
+
+            {/* Botón "Ver más" a la derecha */}
+            <div className="md:w-1/3 flex justify-center md:justify-end">
+              <Link href="/ofertas" className="inline-block bg-white text-green-600 hover:bg-gray-100 font-medium px-4 py-2 rounded-md transition-colors">
+                Ver más
+              </Link>
             </div>
           </div>
         </div>
@@ -170,10 +186,30 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
                   key={product.id} 
                   className="bg-white rounded-lg overflow-hidden text-black hover:shadow-lg transition-shadow flex-shrink-0 w-[85%] md:w-full snap-center mr-4 md:mr-0"
                 >
-                  <div className="p-4">
+                  <div className="p-3 relative">
+                    {/* Botón de lista de deseos */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const productId = product.id.toString();
+                        if (isInWishlist(productId)) {
+                          removeFromWishlist(productId);
+                        } else {
+                          addToWishlist(productId);
+                        }
+                      }}
+                      className="absolute top-2 left-2 bg-white p-1.5 rounded-full shadow-sm hover:shadow-md transition-shadow z-10"
+                      aria-label={isInWishlist(product.id.toString()) ? "Quitar de lista de deseos" : "Añadir a lista de deseos"}
+                    >
+                      <Heart 
+                        size={18} 
+                        className={`${isInWishlist(product.id.toString()) ? "fill-red-500 text-red-500" : "text-gray-400"}`} 
+                      />
+                    </button>
+                    
                     {/* Imagen del producto */}
                     <Link href={`/product/${product.id}`}>
-                      <div className="flex justify-center h-48 mb-4">
+                      <div className="flex justify-center h-40 mb-2">
                         <img 
                           src={product.image} 
                           alt={product.title} 
@@ -183,39 +219,35 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
                     </Link>
                     
                     {/* Marca/Categoría */}
-                    <div className="text-xs text-gray-500 uppercase mb-1">{product.subtitle}</div>
+                    <div className="text-xs text-gray-500 uppercase mb-0.5">{product.subtitle}</div>
                     
                     {/* Título del producto */}
                     <Link href={`/product/${product.id}`}>
-                      <h3 className="text-base font-medium line-clamp-2 h-12 mb-4">{product.title}</h3>
+                      <h3 className="text-base font-medium line-clamp-2 h-10 mb-1">{product.title}</h3>
                     </Link>
                     
                     {/* Precio */}
-                    <div className="text-xl font-bold text-green-600 mb-4">S/ {discountedPrice}</div>
+                    <div className="text-xl font-bold text-green-600 mb-2">S/ {discountedPrice}</div>
+                    
+                    {/* Opciones de entrega */}
+                    <div className="flex mb-2 text-sm gap-2">
+                      <div className="flex items-center bg-gray-50 px-2 py-1 rounded shadow-sm">
+                        <Truck size={16} className="text-green-600 mr-1" />
+                        <span>Delivery</span>
+                      </div>
+                      <div className="flex items-center bg-gray-50 px-2 py-1 rounded shadow-sm">
+                        <Store size={16} className="text-green-600 mr-1" />
+                        <span>Recojo en tienda</span>
+                      </div>
+                    </div>
                     
                     {/* Botón de agregar al carrito */}
                     <button 
                       onClick={() => handleAddToCart(product)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
+                      className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors text-lg"
                     >
                       Agregar al carrito
                     </button>
-                    
-                    {/* Opciones de entrega */}
-                    <div className="flex mt-3 text-sm">
-                      <div className="flex items-center mr-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>Delivery</span>
-                      </div>
-                      <div className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>Recojo en tienda</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               );
