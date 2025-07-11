@@ -43,14 +43,19 @@ const CartButton: React.FC<CartButtonProps> = ({
     >
       <ShoppingCart 
         size={iconSize} 
-        className={`text-gray-800 transition-colors ${isAnimating ? 'animate-bounce text-green-600' : ''}`}
+        className={`text-gray-800 transition-colors ${isAnimating ? 'animate-bounce' : ''}`}
+        style={isAnimating ? { color: '#1ab25a' } : undefined}
       />
       {totalItems > 0 && (
         <span 
-          className={`absolute -top-1 -right-2 bg-green-600 text-white rounded-full flex items-center justify-center
+          className={`absolute -top-1 -right-2 text-white rounded-full flex items-center justify-center
             transition-all duration-300
-            ${isAnimating ? 'scale-125 ring-2 ring-green-300' : ''}
+            ${isAnimating ? 'scale-125 ring-2' : ''}
             ${mobile ? 'text-[10px] w-4 h-4' : 'text-xs w-5 h-5'}`}
+          style={{ 
+            backgroundColor: '#1ab25a',
+            boxShadow: isAnimating ? '0 0 0 2px rgba(26, 178, 90, 0.2)' : 'none'
+          }}
         >
           {totalItems > 99 ? '99+' : totalItems}
         </span>
@@ -58,7 +63,7 @@ const CartButton: React.FC<CartButtonProps> = ({
       
       {/* Efecto de onda cuando se agrega un producto */}
       {isAnimating && (
-        <span className="absolute inset-0 rounded-full animate-ping bg-green-400 opacity-30"></span>
+        <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ backgroundColor: 'rgba(26, 178, 90, 0.3)' }}></span>
       )}
     </button>
   );

@@ -103,7 +103,7 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
   if (!isActive || flashSaleProducts.length === 0) return null;
   
   return (
-    <div className="bg-green-600 text-white py-6">
+    <div style={{ backgroundColor: '#1ab25a' }} className="text-white py-6">
       <div className="container mx-auto px-4">
         {/* Encabezado con título, temporizador y botón en la misma línea */}
         <div className="mb-8">
@@ -117,8 +117,8 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
               </div>
               <div className="flex flex-col">
                 <div className="flex flex-row items-center">
-                  <h2 className="text-3xl md:text-4xl font-bold mr-3">OFERTAS</h2>
-                  <h3 className="text-2xl md:text-3xl font-bold text-[#98ce92] mr-3">RELÁMPAGO</h3>
+                  <h2 className="text-[24px] font-bold mr-3">OFERTAS</h2>
+                  <h3 className="text-[24px] font-bold text-[#98ce92] mr-3">RELÁMPAGO</h3>
                   <div className="hidden md:inline-block bg-[#98ce92] text-green-800 text-sm font-bold px-3 py-1.5 rounded">
                     ¡POR TIEMPO LIMITADO!
                   </div>
@@ -187,6 +187,23 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
                   className="bg-white rounded-lg overflow-hidden text-black hover:shadow-lg transition-shadow flex-shrink-0 w-[85%] md:w-full snap-center mr-4 md:mr-0"
                 >
                   <div className="p-3 relative">
+                    {/* Imagen del producto */}
+                    <Link href={`/product/${product.id}`}>
+                      <div className="flex justify-center h-40 mb-2 relative">
+                        <img 
+                          src={product.image} 
+                          alt={product.title} 
+                          className="h-full object-contain"
+                        />
+                        {/* Discount badge */}
+                        {product.discount && (
+                          <span className="absolute top-2 left-2 bg-green-500 text-white text-sm font-bold px-2.5 py-1 rounded-md shadow-md transform scale-110">
+                            -{product.discount}%
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                    
                     {/* Botón de lista de deseos */}
                     <button 
                       onClick={(e) => {
@@ -198,7 +215,7 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
                           addToWishlist(productId);
                         }
                       }}
-                      className="absolute top-2 left-2 bg-white p-1.5 rounded-full shadow-sm hover:shadow-md transition-shadow z-10"
+                      className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-sm hover:shadow-md transition-shadow z-10"
                       aria-label={isInWishlist(product.id.toString()) ? "Quitar de lista de deseos" : "Añadir a lista de deseos"}
                     >
                       <Heart 
@@ -206,17 +223,6 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
                         className={`${isInWishlist(product.id.toString()) ? "fill-red-500 text-red-500" : "text-gray-400"}`} 
                       />
                     </button>
-                    
-                    {/* Imagen del producto */}
-                    <Link href={`/product/${product.id}`}>
-                      <div className="flex justify-center h-40 mb-2">
-                        <img 
-                          src={product.image} 
-                          alt={product.title} 
-                          className="h-full object-contain"
-                        />
-                      </div>
-                    </Link>
                     
                     {/* Marca/Categoría */}
                     <div className="text-xs text-gray-500 uppercase mb-0.5">{product.subtitle}</div>
@@ -244,7 +250,7 @@ const FlashSaleSection: React.FC<FlashSaleProps> = ({ endDate }) => {
                     {/* Botón de agregar al carrito */}
                     <button 
                       onClick={() => handleAddToCart(product)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors text-lg"
+                      className="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-md font-medium transition-colors text-lg"
                     >
                       Agregar al carrito
                     </button>

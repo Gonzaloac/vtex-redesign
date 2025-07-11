@@ -115,7 +115,7 @@ export default function BrandsCarousel() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Nuestras marcas</h2>
+          <h2 className="text-[24px] font-bold text-gray-800 mb-2">Nuestras marcas</h2>
           <div className="w-24 h-1 bg-green-600 mx-auto"></div>
           <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
             Trabajamos con las mejores marcas para ofrecerte productos de calidad que cuidan tu salud y bienestar.

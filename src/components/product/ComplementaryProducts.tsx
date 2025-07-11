@@ -59,19 +59,21 @@ const ComplementaryProducts: React.FC<ComplementaryProductsProps> = ({
       sku: `SKU-${mainProduct.id}`,
     });
     
-    // Añadir todos los productos complementarios (no solo los seleccionados)
-    complementaryProducts.forEach(product => {
-      addToCart({
-        id: product.id.toString(),
-        name: product.title,
-        price: product.discount
-          ? product.price * (1 - product.discount / 100)
-          : product.price,
-        image: product.image,
-        quantity: 1,
-        sku: `SKU-${product.id}`,
+    // Añadir solo los productos complementarios seleccionados
+    complementaryProducts
+      .filter(product => selectedProducts.includes(product.id))
+      .forEach(product => {
+        addToCart({
+          id: product.id.toString(),
+          name: product.title,
+          price: product.discount
+            ? product.price * (1 - product.discount / 100)
+            : product.price,
+          image: product.image,
+          quantity: 1,
+          sku: `SKU-${product.id}`,
+        });
       });
-    });
       
     // Opcional: Mostrar mensaje de éxito o redireccionar al carrito
     alert('¡Combo añadido al carrito!');
@@ -81,11 +83,51 @@ const ComplementaryProducts: React.FC<ComplementaryProductsProps> = ({
   
   return (
     <div className="border border-gray-200 rounded-lg p-4 mb-8">
-      <h3 className="text-xl font-bold text-green-700 mb-4">¡Haz tu compra aún mejor!</h3>
       <p className="text-gray-600 mb-4">Nuestros clientes suelen combinar estos productos</p>
       
-      {/* Contenedor flex para productos */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-center md:space-x-8 mb-6">
+      {/* Vista móvil: grid de 2 columnas con todos los productos integrados */}
+      <div className="grid grid-cols-2 gap-4 md:hidden">
+        {/* Producto principal integrado en la cuadrícula */}
+        <div className="relative border border-[#1ab25a] bg-green-50 rounded-lg p-2 flex flex-col items-center">
+          <div className="absolute -top-2 -right-2 bg-[#1ab25a] rounded-full text-white">
+            <CheckCircle size={16} />
+          </div>
+          <div className="flex justify-center items-center h-24">
+            <img 
+              src={mainProduct.image} 
+              alt={mainProduct.title} 
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+          <p className="text-xs mt-1 text-center line-clamp-1">{mainProduct.title}</p>
+        </div>
+        
+        {/* Productos complementarios en la misma cuadrícula */}
+        {complementaryProducts.map((product) => (
+          <div 
+            key={product.id} 
+            className={`relative border ${selectedProducts.includes(product.id) ? 'border-[#1ab25a] bg-green-50' : 'border-gray-300 bg-white'} rounded-lg p-2 flex flex-col items-center cursor-pointer`}
+            onClick={() => toggleProduct(product.id)}
+          >
+            {selectedProducts.includes(product.id) && (
+              <div className="absolute -top-2 -right-2 bg-[#1ab25a] rounded-full text-white">
+                <CheckCircle size={16} />
+              </div>
+            )}
+            <div className="flex justify-center items-center h-24">
+              <img 
+                src={product.image} 
+                alt={product.title} 
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            <p className="text-xs mt-1 text-center line-clamp-1">{product.title}</p>
+          </div>
+        ))}
+      </div>
+      
+      {/* Vista desktop: mantiene el diseño original */}
+      <div className="hidden md:flex md:flex-row md:items-center md:justify-center md:space-x-8 mb-6">
         {/* Producto principal */}
         <div className="flex flex-col items-center mb-4 md:mb-0">
           <div className="flex-shrink-0 w-24 h-24 relative">
@@ -97,35 +139,45 @@ const ComplementaryProducts: React.FC<ComplementaryProductsProps> = ({
           </div>
         </div>
         
-        {/* Productos complementarios en fila para escritorio */}
-        {complementaryProducts.map((product, index) => (
-          <div key={product.id} className="flex flex-col items-center mb-4 md:mb-0">
-            {/* Símbolo de suma */}
-            <div className="flex-shrink-0 text-xl font-bold text-gray-400 mb-2">+</div>
-            
-            {/* Producto complementario - todos seleccionados por defecto */}
-            <div 
-              className="relative border border-green-500 bg-green-50 rounded-lg p-2 flex-shrink-0 w-full max-w-[120px] aspect-square"
-            >
-              <div className="absolute -top-2 -right-2 bg-green-500 rounded-full text-white">
-                <CheckCircle size={16} />
-              </div>
-              <div className="flex justify-center items-center h-full">
-                <img 
-                  src={product.image} 
-                  alt={product.title} 
-                  className="max-w-full max-h-full object-contain"
-                />
+        {/* Productos complementarios en fila para desktop */}
+        <div className="flex flex-row items-center space-x-8 w-full">
+          {complementaryProducts.map((product, index) => (
+            <div key={product.id} className="flex flex-col items-center">
+              {/* Símbolo de suma */}
+              <div className="flex-shrink-0 text-xl font-bold text-gray-400 mb-2">+</div>
+              
+              {/* Producto complementario - con checkbox interactivo */}
+              <div 
+                className={`relative border ${selectedProducts.includes(product.id) ? 'border-[#1ab25a] bg-green-50' : 'border-gray-300 bg-white'} rounded-lg p-2 flex-shrink-0 w-full max-w-[120px] aspect-square cursor-pointer mx-auto`}
+                onClick={() => toggleProduct(product.id)}
+              >
+                {selectedProducts.includes(product.id) && (
+                  <div className="absolute -top-2 -right-2 bg-[#1ab25a] rounded-full text-white">
+                    <CheckCircle size={16} />
+                  </div>
+                )}
+                <div className="flex justify-center items-center h-full">
+                  <img 
+                    src={product.image} 
+                    alt={product.title} 
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       
       {/* Detalles de productos */}
       <div className="space-y-2 mb-4">
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-500 rounded-sm mr-2"></div>
+          <input
+            type="checkbox"
+            checked={true}
+            readOnly
+            className="w-4 h-4 text-[#1ab25a] border-[#1ab25a] rounded mr-2"
+          />
           <p className="text-sm">
             {mainProduct.title} - S/ {mainProduct.discount 
               ? (mainProduct.price * (1 - mainProduct.discount / 100)).toFixed(2) 
@@ -135,7 +187,12 @@ const ComplementaryProducts: React.FC<ComplementaryProductsProps> = ({
         
         {complementaryProducts.map(product => (
           <div key={product.id} className="flex items-center">
-            <div className="w-4 h-4 bg-green-500 rounded-sm mr-2"></div>
+            <input
+              type="checkbox"
+              checked={selectedProducts.includes(product.id)}
+              onChange={() => toggleProduct(product.id)}
+              className="w-4 h-4 text-[#1ab25a] border-[#1ab25a] rounded mr-2 cursor-pointer"
+            />
             <p className="text-sm">
               {product.title} - S/ {product.discount 
                 ? (product.price * (1 - product.discount / 100)).toFixed(2) 
@@ -154,7 +211,7 @@ const ComplementaryProducts: React.FC<ComplementaryProductsProps> = ({
         
         <button 
           onClick={handleAddCombo}
-          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-md transition-colors w-full sm:w-auto"
+          className="bg-[#1ab25a] hover:bg-[#1ab25a] text-white font-bold py-2 px-6 rounded-md transition-colors w-full sm:w-auto"
         >
           Añadir combo
         </button>

@@ -60,14 +60,14 @@ export default function ProductShelf() {
         <div className="relative p-2 flex-grow flex items-center justify-center aspect-square">
           <img src={prod.image} alt={prod.title} className="w-full h-full object-contain" />
           {prod.discount && (
-            <span className="absolute top-2 right-2 bg-green-600 text-white text-xs font-semibold px-1.5 py-0.5 rounded-md">
+            <span className="absolute top-2 left-2 bg-green-500 text-white text-sm font-bold px-2.5 py-1 rounded-md shadow-md transform scale-110">
               -{prod.discount}%
             </span>
           )}
           {/* Botón de lista de deseos */}
           <button 
             onClick={handleWishlistClick}
-            className="absolute top-2 left-2 bg-white p-1.5 rounded-full shadow-sm hover:shadow-md transition-shadow"
+            className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-sm hover:shadow-md transition-shadow"
             aria-label={isInWishlist(productId) ? "Quitar de lista de deseos" : "Añadir a lista de deseos"}
           >
             <Heart 
@@ -117,7 +117,7 @@ export default function ProductShelf() {
   return (
     <section className="py-16 bg-[#f9f8f5]">
       <div className="container mx-auto px-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-12">Los más vendidos</h2>
+        <h2 className="text-[24px] font-bold text-center mb-6 md:mb-12">Los más vendidos</h2>
         
         {/* Grid para móvil (2 columnas) y desktop (4 columnas) */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
@@ -148,7 +148,7 @@ export default function ProductShelf() {
         {/* Botón "Ver más" para desktop */}
         <div className="mt-8 hidden md:flex justify-center">
           <Link href="/productos">
-            <button className="bg-white border border-green-600 text-green-600 hover:bg-green-50 font-semibold px-8 py-2 rounded-full transition-colors">
+            <button className="bg-white border font-semibold px-8 py-2 rounded-full transition-colors" style={{ borderColor: '#1ab25a', color: '#1ab25a' }}>
               Ver más
             </button>
           </Link>

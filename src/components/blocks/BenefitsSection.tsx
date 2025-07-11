@@ -44,7 +44,7 @@ export default function BenefitsSection() {
   return (
     <section className="py-12 bg-[#f9f8f5]">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Te ayudamos a lograr tus objetivos</h2>
+        <h2 className="text-[24px] font-bold text-center mb-8 text-gray-800">Te ayudamos a lograr tus objetivos</h2>
         <div className="relative px-8">
           <button 
             className="absolute -left-4 top-1/2 transform -translate-y-1/2 bg-green-600 rounded-full p-2 shadow z-10 text-white"

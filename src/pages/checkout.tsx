@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, CreditCard, Truck, AlertCircle, MapPin, X, Check, ChevronDown, Search } from 'lucide-react';
+import { ArrowLeft, Trash2, CreditCard, Truck, AlertCircle, MapPin, X, Check, ChevronDown, Search, Calendar } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
@@ -25,6 +25,10 @@ const Popup = dynamic(
   () => import('react-leaflet').then((mod) => mod.Popup),
   { ssr: false }
 );
+const ZoomControl = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Control.Zoom),
+  { ssr: false }
+);
 
 // Componente para actualizar la vista del mapa cuando cambian las coordenadas
 const ChangeMapView = dynamic(
@@ -39,6 +43,379 @@ const ChangeMapView = dynamic(
   { ssr: false }
 );
 
+// Componente para actualizar la vista del mapa
+const SetViewOnChange = dynamic(
+  () => import('react-leaflet').then((mod) => {
+    // Componente personalizado para cambiar la vista del mapa
+    return ({ coords, zoom }) => {
+      const map = mod.useMap();
+      map.setView(coords, zoom);
+      return null;
+    };
+  }),
+  { ssr: false }
+);
+
+// Datos de tiendas para el modal de selección
+const stores = [
+  {
+    id: 'sanmiguel',
+    name: 'ORGANA SAN MIGUEL',
+    address: 'Avenida la Marina 2095, San Miguel',
+    district: 'San Miguel',
+    city: 'Lima',
+    distance: '4.2 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.077, -77.083]
+  },
+  {
+    id: 'sanisidro1',
+    name: 'ORGANA SAN ISIDRO',
+    address: 'Av. Gral. Salaverry 2407, San Isidro',
+    district: 'San Isidro',
+    city: 'Lima',
+    distance: '3.8 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.094, -77.051]
+  },
+  {
+    id: 'magdalena',
+    name: 'ORGANA MAGDALENA',
+    address: 'Jr. Bolognesi 395, Magdalena del Mar',
+    district: 'Magdalena',
+    city: 'Lima',
+    distance: '5.1 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.097, -77.071]
+  },
+  {
+    id: 'vitaminasmagdalena',
+    name: 'VITAMINAS MAGDALENA',
+    address: 'Av. Javier Prado Oeste 1458, Magdalena',
+    district: 'Magdalena',
+    city: 'Lima',
+    distance: '5.3 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.088, -77.063]
+  },
+  {
+    id: 'lamolina',
+    name: 'ORGANA LA MOLINA',
+    address: 'Av. La Molina 1167, La Molina',
+    district: 'La Molina',
+    city: 'Lima',
+    distance: '12.5 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.074, -76.952]
+  },
+  {
+    id: 'lamolina2',
+    name: 'ORGANA LA MOLINA 2',
+    address: 'Av. La Fontana 790, La Molina',
+    district: 'La Molina',
+    city: 'Lima',
+    distance: '13.2 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.085, -76.948]
+  },
+  {
+    id: 'losolivos',
+    name: 'ORGANA LOS OLIVOS',
+    address: 'Av. Antunez de Mayolo 830',
+    district: 'Los Olivos',
+    city: 'Lima',
+    distance: '8.5 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-11.991, -77.068]
+  },
+  {
+    id: 'losolivos2',
+    name: 'ORGANA LOS OLIVOS 2',
+    address: 'Av. Alfredo Mendiola 3583, Los Olivos',
+    district: 'Los Olivos',
+    city: 'Lima',
+    distance: '9.7 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-11.982, -77.058]
+  },
+  {
+    id: 'vitaminaslosolivos',
+    name: 'VITAMINAS LOS OLIVOS',
+    address: 'Av. Antúnez de Mayolo 1250, Los Olivos',
+    district: 'Los Olivos',
+    city: 'Lima',
+    distance: '9.1 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-11.988, -77.073]
+  },
+  {
+    id: 'pueblolibre',
+    name: 'ORGANA PUEBLO LIBRE',
+    address: 'Avenida José Leguía y Meléndez 922',
+    district: 'Pueblo Libre',
+    city: 'Lima',
+    distance: '3.2 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.071, -77.063]
+  },
+  {
+    id: 'surco',
+    name: 'ORGANA SURCO',
+    address: 'Av. Caminos del Inca 1803, Santiago de Surco',
+    district: 'Santiago de Surco',
+    city: 'Lima',
+    distance: '10.4 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.136, -76.981]
+  },
+  {
+    id: 'sanborja',
+    name: 'ORGANA SAN BORJA',
+    address: 'Av. Aviación 2449',
+    district: 'San Borja',
+    city: 'Lima',
+    distance: '5.5 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.108, -76.998]
+  },
+  {
+    id: 'surquillo',
+    name: 'ORGANA SURQUILLO',
+    address: 'Av. Angamos Este 1099',
+    district: 'Surquillo',
+    city: 'Lima',
+    distance: '7.3 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.111, -77.021]
+  },
+  {
+    id: 'sanisidro2',
+    name: 'ORGANA SAN ISIDRO 2',
+    address: 'Av. Conquistadores 605, San Isidro',
+    district: 'San Isidro',
+    city: 'Lima',
+    distance: '4.6 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.103, -77.036]
+  },
+  {
+    id: 'miraflores',
+    name: 'ORGANA MIRAFLORES',
+    address: 'Av Benavides 455, Miraflores',
+    district: 'Miraflores',
+    city: 'Lima',
+    distance: '6.8 km',
+    availability: 'Todos los productos disponibles',
+    shipping: 'Gratis',
+    deliveryTime: 'Listo en hasta 2 días hábiles',
+    coords: [-12.127, -77.030]
+  }
+];
+
+// Componente Modal para seleccionar tienda
+const StorePickupModal = ({ isOpen, onClose, onSelectStore }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredStores, setFilteredStores] = useState(stores);
+  const [selectedStoreId, setSelectedStoreId] = useState(null);
+  const [mapCenter, setMapCenter] = useState([-12.046, -77.043]); // Lima centro por defecto
+  const [mapZoom, setMapZoom] = useState(11);
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    const filtered = stores.filter(store => 
+      store.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      store.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      store.district.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredStores(filtered);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  const handleStoreHover = (store) => {
+    setMapCenter(store.coords);
+    setMapZoom(15);
+    setSelectedStoreId(store.id);
+  };
+
+  const handleStoreSelect = (store) => {
+    onSelectStore(store);
+  };
+
+  // Icono personalizado para el marcador
+  const storeIcon = new L.Icon({
+    iconUrl: '/marker-icon.png',
+    iconRetinaUrl: '/marker-icon-2x.png',
+    shadowUrl: '/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  // Icono para tienda seleccionada
+  const selectedStoreIcon = new L.Icon({
+    iconUrl: '/marker-icon-green.png',
+    iconRetinaUrl: '/marker-icon-2x-green.png',
+    shadowUrl: '/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div 
+        ref={modalRef}
+        className="bg-white rounded-lg w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 className="text-lg font-medium">Elija un punto de recogida</h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="p-4 border-b border-gray-200">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar por dirección o distrito"
+              className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+          </div>
+        </div>
+        
+        <div className="flex flex-grow overflow-hidden">
+          {/* Lista de tiendas */}
+          <div className="w-1/2 overflow-y-auto border-r border-gray-200">
+            {filteredStores.map(store => (
+              <div 
+                key={store.id}
+                className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${selectedStoreId === store.id ? 'bg-green-50' : ''}`}
+                onClick={() => handleStoreSelect(store)}
+                onMouseEnter={() => handleStoreHover(store)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-green-500 mt-1">
+                    <MapPin size={18} />
+                  </div>
+                  <div className="flex-grow">
+                    <h4 className="font-medium text-gray-900">{store.name}</h4>
+                    <p className="text-sm text-gray-600">{store.address}</p>
+                    <p className="text-sm text-gray-600">{store.district}</p>
+                    <p className="text-sm text-gray-600">{store.city}</p>
+                    <p className="text-sm text-green-600 mt-1">{store.availability}</p>
+                  </div>
+                  <div className="text-right text-sm text-gray-500">
+                    <p>{store.distance}</p>
+                    <p className="text-gray-900 font-medium">{store.shipping}</p>
+                    <p className="text-xs">{store.deliveryTime}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Mapa */}
+          <div className="w-1/2 h-[500px]">
+            <MapContainer 
+              center={mapCenter} 
+              zoom={mapZoom} 
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <ZoomControl position="bottomright" />
+              
+              {stores.map(store => (
+                <Marker 
+                  key={store.id} 
+                  position={store.coords} 
+                  icon={selectedStoreId === store.id ? selectedStoreIcon : storeIcon}
+                  eventHandlers={{
+                    click: () => handleStoreSelect(store),
+                    mouseover: () => handleStoreHover(store)
+                  }}
+                >
+                  <Popup>
+                    <div>
+                      <h3 className="font-medium">{store.name}</h3>
+                      <p className="text-sm">{store.address}</p>
+                      <p className="text-sm">{store.district}, {store.city}</p>
+                      <button 
+                        className="mt-2 text-sm text-white bg-green-600 px-3 py-1 rounded-md"
+                        onClick={() => handleStoreSelect(store)}
+                      >
+                        Seleccionar
+                      </button>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+              
+              <SetViewOnChange coords={mapCenter} zoom={mapZoom} />
+            </MapContainer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CheckoutPage: React.FC = () => {
   const { cart, removeFromCart, updateQuantity, subtotal, totalItems } = useCart();
   const router = useRouter();
@@ -49,6 +426,8 @@ const CheckoutPage: React.FC = () => {
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [showDeliveryOptions, setShowDeliveryOptions] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('debit'); // 'debit', 'credit', 'cash', 'yape'
+  const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
+  const [selectedStore, setSelectedStore] = useState(stores[4]); // Default to Pueblo Libre store
   const [formData, setFormData] = useState({
     // Datos de identificación
     email: 'gonzaloac24@gmail.es',
@@ -65,7 +444,11 @@ const CheckoutPage: React.FC = () => {
     reference: 'Cerca al parque Kennedy',
     deliveryMethod: 'delivery',
     // Datos de pago
-    paymentMethod: 'card'
+    paymentMethod: 'card',
+    // Datos de facturación
+    wantInvoice: false,
+    businessName: '',
+    ruc: ''
   });
   
   // Configuración del icono de Leaflet
@@ -178,6 +561,9 @@ const CheckoutPage: React.FC = () => {
       [name]: value
     });
   };
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
 
   return (
     <SimpleLayout title="Checkout" showBackButton={false}>
@@ -306,25 +692,46 @@ const CheckoutPage: React.FC = () => {
                       name="invoice"
                       type="checkbox"
                       className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                      checked={formData.invoice}
-                      onChange={(e) => setFormData({...formData, invoice: e.target.checked})}
+                      checked={formData.wantInvoice}
+                      onChange={(e) => setFormData({...formData, wantInvoice: e.target.checked})}
                     />
                     <label htmlFor="invoice" className="ml-2 block text-sm text-gray-500">
                       Quiero factura
                     </label>
                   </div>
                   
-                  <div className="flex items-center">
-                    <input
-                      id="terms"
-                      name="terms"
-                      type="checkbox"
-                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                    />
-                    <label htmlFor="terms" className="ml-2 block text-sm text-gray-500">
-                      He leído y acepto los <span className="text-blue-500">Términos y Condiciones</span> y <span className="text-blue-500">Políticas de privacidad</span>
-                    </label>
-                  </div>
+                  {formData.wantInvoice && (
+                    <div className="space-y-4 pt-4 border-t border-gray-100 mt-4">
+                      <div>
+                        <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
+                          Razón Social
+                        </label>
+                        <input
+                          type="text"
+                          id="businessName"
+                          name="businessName"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                          value={formData.businessName}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="ruc" className="block text-sm font-medium text-gray-700">
+                          RUC
+                        </label>
+                        <input
+                          type="text"
+                          id="ruc"
+                          name="ruc"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                          value={formData.ruc}
+                          onChange={handleChange}
+                          maxLength={11}
+                        />
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="pt-4">
                     <button
@@ -358,39 +765,31 @@ const CheckoutPage: React.FC = () => {
               
               {activeStep === 2 && (
                 <div className="mt-4">
-                  {/* Opciones de método de entrega */}
+                  {/* Sección de Envío */}
                   <div className="mb-6">
-                    <div className="flex items-center mb-4">
-                      <input
-                        type="radio"
-                        id="delivery"
-                        name="deliveryMethod"
-                        value="delivery"
-                        checked={formData.deliveryMethod === 'delivery'}
-                        onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})}
-                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                      />
-                      <label htmlFor="delivery" className="ml-2 block text-sm font-medium text-gray-700">
-                        Envío a domicilio
-                      </label>
-                    </div>
-                    <div className="flex items-center mb-4">
-                      <input
-                        type="radio"
-                        id="pickup"
-                        name="deliveryMethod"
-                        value="pickup"
-                        checked={formData.deliveryMethod === 'pickup'}
-                        onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})}
-                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                      />
-                      <label htmlFor="pickup" className="ml-2 block text-sm font-medium text-gray-700">
-                        Recoger en tienda
-                      </label>
+                    <h3 className="text-lg font-medium text-gray-800 mb-4">Envío</h3>
+                    
+                    <div className="flex border border-gray-300 rounded-lg overflow-hidden mb-4">
+                      <button
+                        type="button"
+                        className={`flex-1 py-3 px-4 text-center ${formData.deliveryMethod === 'delivery' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
+                        onClick={() => setFormData({...formData, deliveryMethod: 'delivery'})}
+                      >
+                        <span>Enviar</span>
+                        <span className="block text-xs">a la dirección</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-1 py-3 px-4 text-center ${formData.deliveryMethod === 'pickup' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
+                        onClick={() => setFormData({...formData, deliveryMethod: 'pickup'})}
+                      >
+                        <span>Recoger</span>
+                        <span className="block text-xs">en la tienda</span>
+                      </button>
                     </div>
                   </div>
                   
-                  {!showDeliveryOptions ? (
+                  {formData.deliveryMethod === 'delivery' ? (
                     <>
                       {/* Mapa y campos de dirección */}
                       <div className="mb-6">
@@ -411,7 +810,7 @@ const CheckoutPage: React.FC = () => {
                               />
                               <button
                                 type="button"
-                                className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 rounded-r-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 rounded-r-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 onClick={geocodeAddress}
                                 disabled={isSearchingAddress || !formData.address}
                               >
@@ -489,50 +888,109 @@ const CheckoutPage: React.FC = () => {
                     </>
                   ) : (
                     <div className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="text-lg font-medium text-gray-800 mb-4">Envío</h3>
-                      
-                      <div className="flex border border-gray-300 rounded-lg overflow-hidden mb-4">
-                        <button
-                          type="button"
-                          className={`flex-1 py-3 px-4 text-center ${formData.deliveryMethod === 'delivery' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
-                          onClick={() => setFormData({...formData, deliveryMethod: 'delivery'})}
-                        >
-                          <span>Enviar</span>
-                          <span className="text-xs">a la dirección</span>
-                        </button>
-                        <button
-                          type="button"
-                          className={`flex-1 py-3 px-4 text-center ${formData.deliveryMethod === 'pickup' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
-                          onClick={() => setFormData({...formData, deliveryMethod: 'pickup'})}
-                        >
-                          <span>Recoger</span>
-                          <span className="text-xs">en la tienda</span>
-                        </button>
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin size={18} className="text-green-600" />
+                          <h4 className="text-sm font-medium text-gray-700">{selectedStore.name}</h4>
+                        </div>
+                        <p className="text-sm text-gray-600 ml-6">{selectedStore.address}</p>
+                        <p className="text-sm text-gray-600 ml-6">{selectedStore.district}</p>
+                        <p className="text-sm text-gray-600 ml-6">{selectedStore.city}</p>
+                        <button className="text-sm text-green-600 ml-6 mt-1">Ver más detalles</button>
                       </div>
                       
+                      <button 
+                        className="w-full border border-green-600 text-green-600 py-2 px-4 rounded-md text-sm font-medium mb-4"
+                        onClick={() => setIsStoreModalOpen(true)}
+                      >
+                        Vea todos los puntos de recogida disponibles
+                      </button>
+                      
                       <div className="mb-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Método de entrega</h4>
-                        <div className="border border-gray-200 rounded-lg p-3 flex items-center">
-                          <div className="flex-shrink-0 mr-2">
-                            <input
-                              type="radio"
-                              id="regular-delivery"
-                              name="deliverySpeed"
-                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                              checked
-                              readOnly
-                            />
-                          </div>
-                          <div className="flex-grow">
-                            <label htmlFor="regular-delivery" className="block text-sm font-medium text-gray-700">
-                              Regular
-                            </label>
-                            <p className="text-xs text-gray-500">En hasta 3 días hábiles</p>
-                          </div>
-                          <div className="flex-shrink-0 text-sm font-medium">
-                            S/ 7.90
-                          </div>
+                        <div className="flex items-center mb-2">
+                          <input
+                            type="radio"
+                            id="schedule-all"
+                            name="scheduleOption"
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                            checked
+                            readOnly
+                          />
+                          <label htmlFor="schedule-all" className="ml-2 block text-sm font-medium text-gray-700">
+                            Programar todos
+                          </label>
                         </div>
+                        
+                        <button 
+                          className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium flex items-center justify-center gap-2"
+                          onClick={() => setShowDatePicker(!showDatePicker)}
+                        >
+                          <Calendar size={16} />
+                          {selectedDate ? selectedDate : "Elija una fecha de entrega"}
+                        </button>
+                        
+                        {showDatePicker && (
+                          <div className="mt-2 border border-gray-200 rounded-lg p-4 bg-white shadow-md">
+                            <div className="text-center mb-2">
+                              <h4 className="text-sm font-medium">julio 2025</h4>
+                            </div>
+                            <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                              <div className="text-gray-500">lu</div>
+                              <div className="text-gray-500">ma</div>
+                              <div className="text-gray-500">mi</div>
+                              <div className="text-gray-500">ju</div>
+                              <div className="text-gray-500">vi</div>
+                              <div className="text-gray-500">sá</div>
+                              <div className="text-gray-500">do</div>
+                              
+                              <div className="text-gray-400">30</div>
+                              <div>1</div>
+                              <div>2</div>
+                              <div>3</div>
+                              <div>4</div>
+                              <div>5</div>
+                              <div>6</div>
+                              
+                              <div>7</div>
+                              <div>8</div>
+                              <div>9</div>
+                              <div>10</div>
+                              <div 
+                                className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDate("11 de julio de 2025");
+                                  setShowDatePicker(false);
+                                }}
+                              >11</div>
+                              <div>12</div>
+                              <div>13</div>
+                              
+                              <div>14</div>
+                              <div>15</div>
+                              <div>16</div>
+                              <div>17</div>
+                              <div className="text-gray-400">18</div>
+                              <div className="text-gray-400">19</div>
+                              <div className="text-gray-400">20</div>
+                              
+                              <div className="text-gray-400">21</div>
+                              <div className="text-gray-400">22</div>
+                              <div className="text-gray-400">23</div>
+                              <div className="text-gray-400">24</div>
+                              <div className="text-gray-400">25</div>
+                              <div className="text-gray-400">26</div>
+                              <div className="text-gray-400">27</div>
+                              
+                              <div className="text-gray-400">28</div>
+                              <div className="text-gray-400">29</div>
+                              <div className="text-gray-400">30</div>
+                              <div className="text-gray-400">31</div>
+                              <div className="text-gray-400">1</div>
+                              <div className="text-gray-400">2</div>
+                              <div className="text-gray-400">3</div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       <button
@@ -540,7 +998,7 @@ const CheckoutPage: React.FC = () => {
                         className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-md font-medium transition-colors"
                         onClick={nextStep}
                       >
-                        IR PARA EL PAGO
+                        Ir para el pago
                       </button>
                     </div>
                   )}
@@ -876,7 +1334,7 @@ const CheckoutPage: React.FC = () => {
                         className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                       />
                       <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                        He leído y acepto los <span className="text-green-600">términos y condiciones</span> y <span className="text-green-600">política de datos personales</span>.
+                        He leído y acepto los términos y condiciones y política de datos personales.
                       </label>
                     </div>
                   </div>
@@ -933,15 +1391,18 @@ const CheckoutPage: React.FC = () => {
               </div>
               
               {/* Código de promoción */}
-              <div className="flex gap-2 mb-6">
-                <input 
-                  type="text" 
-                  placeholder="Código" 
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <button className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium">
-                  Añadir
-                </button>
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 mb-2">¿Tienes un cupón? Ingrésalo aquí (opcional)</p>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Código de cupón" 
+                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1ab25a] focus:border-transparent"
+                  />
+                  <button className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    Añadir
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-3 mb-6">
@@ -975,6 +1436,16 @@ const CheckoutPage: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Modal para seleccionar tienda */}
+      <StorePickupModal 
+        isOpen={isStoreModalOpen} 
+        onClose={() => setIsStoreModalOpen(false)} 
+        onSelectStore={(store) => {
+          setSelectedStore(store);
+          setIsStoreModalOpen(false);
+        }} 
+      />
     </SimpleLayout>
   );
 };

@@ -33,9 +33,9 @@ export default function Home() {
       {/* Sección de categorías resaltadas */}
       <CategoryGrid />
       <ProductShelf />
-      <BenefitsSection />
       <ImmuneDefenseSection />
-      <InfoBar />  {/* Nueva sección de info */}
+      <BenefitsSection />
+      <InfoBar showFreeShippingBar={false} />  {/* Barra de info sin la barra de envío gratuito */}
       <BrandsCarousel /> {/* Carrusel de marcas */}
      
     </Layout>

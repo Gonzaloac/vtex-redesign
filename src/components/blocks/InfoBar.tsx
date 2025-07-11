@@ -4,6 +4,11 @@
 import React, { useState, useEffect } from 'react'
 import { Truck, Headphones, CreditCard, Package } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useCart } from '@/context/CartContext'
+
+interface InfoBarProps {
+  showFreeShippingBar?: boolean;
+}
 
 interface InfoItem {
   id: number
@@ -19,7 +24,41 @@ const infoItems: InfoItem[] = [
   { id: 4, icon: <Package size={40} className="text-white" />, title: 'Cambios y Devoluciones', subtitle: '48 horas' },
 ]
 
-export default function InfoBar() {
+// Componente para la barra de progreso de envío gratis
+const FreeShippingBar = () => {
+  const { subtotal } = useCart();
+  const freeShippingThreshold = 220; // Umbral para envío gratis en S/
+  const progress = Math.min((subtotal / freeShippingThreshold) * 100, 100);
+  const remaining = Math.max(freeShippingThreshold - subtotal, 0);
+  
+  return (
+    <div className="bg-white py-3 px-4 shadow-sm">
+      <div className="container mx-auto max-w-7xl">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Truck size={20} className="text-green-600" />
+            {subtotal >= freeShippingThreshold ? (
+              <p className="text-sm font-medium">¡Felicidades! Tu pedido tiene <span className="font-bold text-green-600">envío gratis</span></p>
+            ) : (
+              <p className="text-sm font-medium">
+                ¡Solo te falta <span className="font-bold text-green-600">S/ {remaining.toFixed(2)}</span> para un envío gratis!
+              </p>
+            )}
+          </div>
+          
+          <div className="w-full sm:w-1/2 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-green-600 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progress}%`, backgroundColor: '#1ab25a' }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function InfoBar({ showFreeShippingBar = false }: InfoBarProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
@@ -76,37 +115,45 @@ export default function InfoBar() {
   };
 
   return (
-    <section className="bg-green-600 py-10 lg:py-12 overflow-hidden">
-      <motion.div 
-        className="max-w-7xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-white text-center"
-        initial="hidden"
-        animate={isVisible ? "visible" : "hidden"}
-        variants={containerVariants}
-      >
-        {infoItems.map(item => (
-          <motion.div 
-            key={item.id} 
-            className="flex flex-col items-center gap-2 md:gap-3 p-3 md:p-4 rounded-lg hover:bg-green-500 transition-colors duration-300 cursor-pointer"
-            variants={itemVariants}
-            whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-          >
+    <>
+      {showFreeShippingBar && <FreeShippingBar />}
+      <section style={{ backgroundColor: '#1ab25a' }} className="py-10 lg:py-12 overflow-hidden">
+        <motion.div 
+          className="max-w-7xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-white text-center"
+          initial="hidden"
+          animate={isVisible ? "visible" : "hidden"}
+          variants={containerVariants}
+        >
+          {infoItems.map(item => (
             <motion.div 
-              variants={iconVariants}
-              whileHover="hover"
-              className="bg-green-500 hover:bg-green-400 p-2 md:p-3 rounded-full transition-colors duration-300"
+              key={item.id} 
+              className="flex flex-col items-center gap-2 md:gap-3 p-3 md:p-4 rounded-lg transition-colors duration-300 cursor-pointer"
+              variants={itemVariants}
+              whileHover={{ 
+                scale: 1.03, 
+                backgroundColor: '#159a4e',
+                transition: { duration: 0.2 } 
+              }}
             >
-              {React.cloneElement(item.icon as React.ReactElement, { size: isMobile ? 30 : 40 })}
+              <motion.div 
+                variants={iconVariants}
+                whileHover="hover"
+                className="p-2 md:p-3 rounded-full transition-colors duration-300"
+                style={{ backgroundColor: '#1ab25a' }}
+              >
+                {React.cloneElement(item.icon as React.ReactElement, { size: isMobile ? 30 : 40 })}
+              </motion.div>
+              <motion.h4 
+                className="font-semibold text-[16px] md:text-[18px] leading-snug mt-1 md:mt-2"
+                whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+              >
+                {item.title}
+              </motion.h4>
+              <p className="text-[14px] md:text-[16px] leading-snug font-light">{item.subtitle}</p>
             </motion.div>
-            <motion.h4 
-              className="font-semibold text-[16px] md:text-[18px] leading-snug mt-1 md:mt-2"
-              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-            >
-              {item.title}
-            </motion.h4>
-            <p className="text-[14px] md:text-[16px] leading-snug font-light">{item.subtitle}</p>
-          </motion.div>
-        ))}
-      </motion.div>
-    </section>
+          ))}
+        </motion.div>
+      </section>
+    </>
   )
 }

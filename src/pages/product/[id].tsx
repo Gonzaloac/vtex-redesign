@@ -428,18 +428,18 @@ function ProductPage({ product }: { product: Product | null }) {
               </div>
 
               {/* Información adicional */}
-              <div className="grid grid-cols-3 gap-4 mb-8">
-                <div className="bg-[#e6f0eb] rounded-lg p-4 flex flex-col items-center justify-center text-center">
-                  <span className="text-2xl mb-1">🚚</span>
-                  <span className="text-sm">Envío rápido<br />24-48 horas</span>
+              <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8">
+                <div className="bg-[#e6f0eb] rounded-lg p-2 md:p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-lg md:text-2xl mb-0 md:mb-1">🚚</span>
+                  <span className="text-xs md:text-sm">Envío rápido<br className="hidden xs:block" />24-48h</span>
                 </div>
-                <div className="bg-[#e6f0eb] rounded-lg p-4 flex flex-col items-center justify-center text-center">
-                  <span className="text-2xl mb-1">🔒</span>
-                  <span className="text-sm">Pago seguro<br />Múltiples métodos</span>
+                <div className="bg-[#e6f0eb] rounded-lg p-2 md:p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-lg md:text-2xl mb-0 md:mb-1">🔒</span>
+                  <span className="text-xs md:text-sm">Pago seguro<br className="hidden xs:block" />Múltiples</span>
                 </div>
-                <div className="bg-[#e6f0eb] rounded-lg p-4 flex flex-col items-center justify-center text-center">
-                  <span className="text-2xl mb-1">✅</span>
-                  <span className="text-sm">Garantía<br />30 días</span>
+                <div className="bg-[#e6f0eb] rounded-lg p-2 md:p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-lg md:text-2xl mb-0 md:mb-1">✅</span>
+                  <span className="text-xs md:text-sm">Garantía<br className="hidden xs:block" />30 días</span>
                 </div>
               </div>
 
@@ -492,10 +492,6 @@ function ProductPage({ product }: { product: Product | null }) {
                 </div>
               </div>
 
-              <button className="w-full bg-black hover:bg-gray-800 text-white font-semibold px-8 py-3 rounded-md mb-4">
-                Comprar ahora
-              </button>
-
               <div className="mt-6 bg-[#e6f0eb] rounded-lg p-4 flex items-center justify-center">
                 <div className="text-center">
                   <h4 className="font-semibold mb-1">Pruébalo y, si no te gusta, ¡te devolvemos el dinero!</h4>
@@ -515,7 +511,6 @@ function ProductPage({ product }: { product: Product | null }) {
 
               {/* Sección "¡Haz tu compra aún mejor!" */}
               <div className="mt-6 bg-[#f9f8f5] rounded-lg p-6">
-                <h4 className="font-semibold mb-4">¡Haz tu compra aún mejor!</h4>
                 <ComplementaryProducts 
                   mainProduct={product} 
                   complementaryProducts={getComplementaryProducts(product.id)} 
@@ -586,7 +581,7 @@ function ProductPage({ product }: { product: Product | null }) {
       </div>
 
       {/* Sección verde divisoria */}
-      <div className="w-full bg-green-600 py-8 mt-16">
+      <div className="w-full bg-[#1ab25a] py-8 mt-16">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="text-white text-center md:text-left mb-4 md:mb-0">
@@ -594,7 +589,7 @@ function ProductPage({ product }: { product: Product | null }) {
               <p className="mt-2">Nuestros especialistas están disponibles para asesorarte</p>
             </div>
             <div>
-              <button className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-6 py-3 rounded-md">
+              <button className="bg-white text-[#1ab25a] hover:bg-gray-100 font-semibold px-6 py-3 rounded-md">
                 Contactar ahora
               </button>
             </div>
@@ -605,7 +600,7 @@ function ProductPage({ product }: { product: Product | null }) {
       {/* Productos relacionados */}
       <div className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold mb-10">Productos relacionados</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {getRelatedProducts(product?.id || 0).map(relatedProduct => {
             const relatedProductId = relatedProduct.id.toString();
             const isRelatedInWishlist = isInWishlist(relatedProductId);
@@ -644,17 +639,17 @@ function ProductPage({ product }: { product: Product | null }) {
                   href={`/product/${relatedProduct.id}`} 
                   className="block"
                 >
-                  <div className="p-4 flex items-center justify-center" style={{ height: '200px' }}>
+                  <div className="p-2 md:p-4 flex items-center justify-center" style={{ height: '120px', maxHeight: '120px' }}>
                     <img 
                       src={relatedProduct.image} 
                       alt={relatedProduct.title} 
                       className="max-h-full max-w-full object-contain" 
                     />
                   </div>
-                  <div className="p-4 border-t">
-                    <p className="text-sm text-gray-500 mb-1">{relatedProduct.subtitle}</p>
-                    <h3 className="font-semibold mb-2 line-clamp-2">{relatedProduct.title}</h3>
-                    <p className="text-green-600 font-bold text-lg">
+                  <div className="p-2 md:p-4 border-t">
+                    <p className="text-xs md:text-sm text-gray-500 mb-1">{relatedProduct.subtitle}</p>
+                    <h3 className="text-sm md:text-base font-semibold mb-1 md:mb-2 line-clamp-2">{relatedProduct.title}</h3>
+                    <p className="text-[#1ab25a] font-bold text-base md:text-lg">
                       S/ {relatedProduct.discount 
                         ? (relatedProduct.price * (1 - relatedProduct.discount / 100)).toFixed(2)
                         : relatedProduct.price.toFixed(2)

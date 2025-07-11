@@ -1,9 +1,38 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { X, Plus, Minus, ShoppingBag, AlertCircle, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag, AlertCircle, Heart, ChevronLeft, ChevronRight, Truck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { products } from '@/data/products';
+
+// Componente para la barra de progreso de envío gratis
+const FreeShippingBar = ({ subtotal }: { subtotal: number }) => {
+  const freeShippingThreshold = 220; // Umbral para envío gratis en S/
+  const progress = Math.min((subtotal / freeShippingThreshold) * 100, 100);
+  const remaining = Math.max(freeShippingThreshold - subtotal, 0);
+  
+  return (
+    <div className="border-b border-gray-200 pb-3 mb-3">
+      <div className="flex items-center gap-2 mb-2">
+        <Truck size={18} className="text-green-600" style={{ color: '#1ab25a' }} />
+        {subtotal >= freeShippingThreshold ? (
+          <p className="text-sm font-medium">¡Felicidades! Tu pedido tiene <span className="font-bold" style={{ color: '#1ab25a' }}>envío gratis</span></p>
+        ) : (
+          <p className="text-sm font-medium">
+            ¡Solo te falta <span className="font-bold" style={{ color: '#1ab25a' }}>S/ {remaining.toFixed(2)}</span> para un envío gratis!
+          </p>
+        )}
+      </div>
+      
+      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div 
+          className="h-full rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${progress}%`, backgroundColor: '#1ab25a' }}
+        />
+      </div>
+    </div>
+  );
+};
 
 const CartSidebar: React.FC = () => {
   const { 
@@ -135,10 +164,10 @@ const CartSidebar: React.FC = () => {
         {/* Encabezado del carrito */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center">
-            <ShoppingBag size={20} className="text-green-600 mr-2" />
+            <ShoppingBag size={20} className="text-green-600 mr-2" style={{ color: '#1ab25a' }} />
             <h2 className="font-bold text-lg">Mi Carrito</h2>
             {totalItems > 0 && (
-              <span className="ml-2 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              <span className="ml-2 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#1ab25a' }}>
                 {totalItems} items
               </span>
             )}
@@ -161,77 +190,83 @@ const CartSidebar: React.FC = () => {
               <p className="text-gray-400 text-sm text-center mb-6">Agrega productos para comenzar tu compra</p>
               <button 
                 onClick={closeCart}
-                className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors"
+                className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors" style={{ backgroundColor: '#1ab25a' }}
               >
                 Seguir comprando
               </button>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-200">
-              {cart.map(item => (
-                <li key={item.id} className={`p-4 ${recentlyAdded[item.id] ? 'bg-green-50 animate-pulse' : ''}`}>
-                  <div className="flex gap-3">
-                    {/* Imagen del producto */}
-                    <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        className="w-full h-full object-contain p-1" 
-                      />
-                    </div>
-                    
-                    {/* Detalles del producto */}
-                    <div className="flex-grow">
-                      <h3 className="font-medium text-gray-900 mb-1 line-clamp-2">{item.name}</h3>
-                      
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-green-600 font-medium">S/ {item.price.toFixed(2)}</span>
+            <div>
+              {/* Barra de envío gratis */}
+              <div className="p-4">
+                <FreeShippingBar subtotal={subtotal} />
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {cart.map(item => (
+                  <li key={item.id} className={`p-4 ${recentlyAdded[item.id] ? 'bg-green-50 animate-pulse' : ''}`}>
+                    <div className="flex gap-3">
+                      {/* Imagen del producto */}
+                      <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-full h-full object-contain p-1" 
+                        />
                       </div>
                       
-                      <div className="flex justify-between items-center">
-                        {/* Control de cantidad */}
-                        <div className="flex items-center border border-gray-300 rounded-md">
-                          <button 
-                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                            className="px-2 py-1 text-gray-500 hover:bg-gray-100"
-                            aria-label="Disminuir cantidad"
-                          >
-                            <Minus size={16} />
-                          </button>
-                          
-                          <span className="px-2 py-1 min-w-[30px] text-center">
-                            {item.quantity}
-                          </span>
-                          
-                          <button 
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="px-2 py-1 text-gray-500 hover:bg-gray-100"
-                            aria-label="Aumentar cantidad"
-                          >
-                            <Plus size={16} />
-                          </button>
+                      {/* Detalles del producto */}
+                      <div className="flex-grow">
+                        <h3 className="font-medium text-gray-900 mb-1 line-clamp-2">{item.name}</h3>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-green-600 font-medium">S/ {item.price.toFixed(2)}</span>
                         </div>
                         
-                        <button 
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-xs text-red-600 hover:text-red-800"
-                          aria-label="Eliminar producto"
-                        >
-                          Eliminar
-                        </button>
+                        <div className="flex justify-between items-center">
+                          {/* Control de cantidad */}
+                          <div className="flex items-center border border-gray-300 rounded-md">
+                            <button 
+                              onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                              className="px-2 py-1 text-gray-500 hover:bg-gray-100"
+                              aria-label="Disminuir cantidad"
+                            >
+                              <Minus size={16} />
+                            </button>
+                            
+                            <span className="px-2 py-1 min-w-[30px] text-center">
+                              {item.quantity}
+                            </span>
+                            
+                            <button 
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              className="px-2 py-1 text-gray-500 hover:bg-gray-100"
+                              aria-label="Aumentar cantidad"
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+                          
+                          <button 
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-xs text-red-600 hover:text-red-800"
+                            aria-label="Eliminar producto"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Precio total del item */}
+                      <div className="text-right">
+                        <span className="font-medium text-gray-900">
+                          S/ {(item.price * item.quantity).toFixed(2)}
+                        </span>
                       </div>
                     </div>
-                    
-                    {/* Precio total del item */}
-                    <div className="text-right">
-                      <span className="font-medium text-gray-900">
-                        S/ {(item.price * item.quantity).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
         
@@ -264,7 +299,7 @@ const CartSidebar: React.FC = () => {
                       {/* Botón de agregar */}
                       <button 
                         onClick={() => handleAddSuggested(suggestedProducts[currentSlide])}
-                        className="bg-green-600 hover:bg-green-700 text-white text-xs py-1.5 px-2 rounded transition-colors whitespace-nowrap"
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs py-1.5 px-2 rounded transition-colors whitespace-nowrap" style={{ backgroundColor: '#1ab25a' }}
                       >
                         AGREGAR
                       </button>
@@ -317,7 +352,7 @@ const CartSidebar: React.FC = () => {
             
             <Link 
               href="/cart" 
-              className="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 px-4 rounded-md font-bold transition-colors"
+              className="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-3 px-4 rounded-md font-bold transition-colors" style={{ backgroundColor: '#1ab25a' }}
             >
               Proceder al pago
             </Link>

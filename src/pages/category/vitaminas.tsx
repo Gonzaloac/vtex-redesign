@@ -276,7 +276,7 @@ export default function VitaminasPage() {
                         className="max-h-full max-w-full object-contain" 
                       />
                       {product.discount && (
-                        <span className="absolute top-3 right-3 bg-green-600 text-white text-sm font-semibold px-2.5 py-1 rounded-md">
+                        <span className="absolute top-2 left-2 bg-green-500 text-white text-sm font-bold px-2.5 py-1 rounded-md shadow-md transform scale-110">
                           -{product.discount}%
                         </span>
                       )}

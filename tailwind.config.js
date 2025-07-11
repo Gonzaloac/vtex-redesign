@@ -3,6 +3,20 @@ module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      colors: {
+        green: {
+          50: '#f0faf4',
+          100: '#dbf5e5',
+          200: '#b9eacc',
+          300: '#88d8aa',
+          400: '#56c182',
+          500: '#1ab25a', // New primary green color
+          600: '#159a4e',
+          700: '#137a40',
+          800: '#126136',
+          900: '#11502f',
+        },
+      },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },

@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import Layout from '@/components/layout/Layout'
 import { products, Product } from '@/data/products'
 import Link from 'next/link'
-import { Filter, SlidersHorizontal, ChevronDown, X } from 'lucide-react'
+import { Filter, SlidersHorizontal, ChevronDown, X, Heart } from 'lucide-react'
 
 // ---------------------------------------------
 // Types
@@ -193,10 +193,10 @@ export default function CategoryPage({ slug }: PageProps) {
   return (
     <Layout title={config.title}>
       {/* Banner de la categoría */}
-      <div className="bg-gradient-to-r from-green-700 to-green-500 text-white">
-        <div className="container mx-auto px-4 py-12">
-          <h1 className="text-4xl font-bold mb-2 capitalize">{config.title}</h1>
-          <p className="text-lg opacity-90 max-w-2xl">{config.description}</p>
+      <div className="bg-gradient-to-r from-green-700 to-[#1ab25a] text-white">
+        <div className="container mx-auto px-4 py-6 md:py-12">
+          <h1 className="text-2xl md:text-4xl font-bold mb-1 md:mb-2 capitalize">{config.title}</h1>
+          <p className="text-sm md:text-lg opacity-90 max-w-2xl">{config.description}</p>
         </div>
       </div>
 
@@ -313,56 +313,66 @@ export default function CategoryPage({ slug }: PageProps) {
                     href={`/product/${product.id}`}
                     className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg hover:border-2 hover:border-green-600 transition-all duration-300 flex flex-col h-full"
                   >
-                    <div className="relative p-3 flex-grow flex items-center justify-center" style={{ height: '280px' }}>
+                    <div className="relative p-2 md:p-3 flex-grow flex items-center justify-center h-[150px] md:h-[280px]">
                       <img 
                         src={product.image} 
                         alt={product.title} 
                         className="w-full h-full object-contain" 
                       />
                       {product.discount && (
-                        <span className="absolute top-3 right-3 bg-green-600 text-white text-sm font-semibold px-2.5 py-1 rounded-md">
+                        <span className="absolute top-2 left-2 bg-[#1ab25a] text-white text-sm font-bold px-2.5 py-1 rounded-md shadow-md transform scale-110">
                           -{product.discount}%
                         </span>
                       )}
+                      <button 
+                        className="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // Aquí iría la lógica para añadir/quitar de favoritos
+                          console.log('Añadir a favoritos:', product.id);
+                        }}
+                      >
+                        <Heart size={18} className="text-gray-400 hover:text-[#1ab25a]" />
+                      </button>
                     </div>
-                    <div className="p-5 pt-2 flex flex-col justify-between" style={{ minHeight: '220px' }}>
+                    <div className="p-4 pt-1 md:p-5 md:pt-2 flex flex-col justify-between min-h-[120px] md:min-h-[220px]">
                       <div>
-                        <p className="text-sm text-gray-500 uppercase mb-1.5">{product.subtitle}</p>
-                        <h3 className="text-base sm:text-lg font-semibold mb-2.5 line-clamp-2 min-h-[3rem]">{product.title}</h3>
+                        <p className="text-xs md:text-sm text-gray-500 uppercase mb-1 md:mb-1.5">{product.subtitle}</p>
+                        <h3 className="text-sm md:text-base md:text-lg font-semibold mb-1.5 md:mb-2.5 line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">{product.title}</h3>
                       </div>
                       <div className="mt-auto">
-                        <div className="flex items-center gap-2.5 mb-3.5">
+                        <div className="flex items-center gap-2 md:gap-2.5 mb-2 md:mb-3.5">
                           {product.discount ? (
                             <> 
-                              <p className="text-gray-500 text-sm line-through">S/ {product.price.toFixed(2)}</p>
-                              <p className="text-green-600 text-xl font-bold">
+                              <p className="text-gray-500 text-xs md:text-sm line-through">S/ {product.price.toFixed(2)}</p>
+                              <p className="text-[#1ab25a] text-lg md:text-xl font-bold">
                                 S/ {(product.price * (1 - product.discount / 100)).toFixed(2)}
                               </p>
                             </>
                           ) : (
-                            <p className="text-green-600 text-xl font-bold mb-3.5">S/ {product.price.toFixed(2)}</p>
+                            <p className="text-[#1ab25a] text-lg md:text-xl font-bold mb-2 md:mb-3.5">S/ {product.price.toFixed(2)}</p>
                           )}
                         </div>
                         
                         {/* Íconos de disponibilidad */}
-                        <div className="flex items-center gap-3 mb-3 flex-wrap">
-                          <div className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-1.5 rounded-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                        <div className="flex items-center justify-between md:flex-row md:justify-start mb-2 md:mb-3">
+                          <div className="flex items-center gap-1 md:gap-1.5 bg-gray-100 px-1.5 md:px-2.5 py-1 md:py-1.5 rounded-md md:mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" className="md:w-4 md:h-4 text-[#1ab25a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                               <circle cx="12" cy="10" r="3"></circle>
                             </svg>
-                            <span className="text-xs font-medium">Delivery</span>
+                            <span className="text-xs md:font-medium">Delivery</span>
                           </div>
-                          <div className="flex items-center gap-1.5 bg-gray-100 px-2.5 py-1.5 rounded-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                          <div className="flex items-center gap-1 md:gap-1.5 bg-gray-100 px-1.5 md:px-2.5 py-1 md:py-1.5 rounded-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" className="md:w-4 md:h-4 text-[#1ab25a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                               <polyline points="9 22 9 12 15 12 15 22"></polyline>
                             </svg>
-                            <span className="text-xs font-medium">Recojo en tienda</span>
+                            <span className="text-xs md:font-medium">Recojo<span className="hidden md:inline"> en tienda</span></span>
                           </div>
                         </div>
                         
-                        <button className="w-full bg-green-600 hover:bg-green-700 text-white text-base font-semibold py-2.5 rounded-md transition-colors">
+                        <button className="w-full bg-[#1ab25a] hover:bg-green-700 text-white text-sm md:text-base font-semibold py-2 md:py-2.5 rounded-md transition-colors">
                           Agregar al carrito
                         </button>
                       </div>

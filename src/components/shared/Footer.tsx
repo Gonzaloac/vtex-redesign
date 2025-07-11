@@ -4,7 +4,7 @@ import { Instagram, Facebook, Phone, Mail } from 'lucide-react'
 
 export default function Footer() {
   return (
-    <footer className="bg-green-600 text-white">
+    <footer className="bg-green-500 text-white">
       {/* Footer principal */}
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -75,7 +75,7 @@ export default function Footer() {
       </div>
 
       {/* Barra inferior de copyright */}
-      <div className="bg-green-700 py-4 px-4">
+      <div className="bg-green-600 py-4 px-4">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center text-sm">
           <p> Organa {new Date().getFullYear()} | Todos los derechos reservados</p>
           <p className="mt-2 md:mt-0">Desarrollado por Harborl</p>

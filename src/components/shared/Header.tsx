@@ -130,7 +130,7 @@ export default function Header() {
   return (
     <header className="w-full">
       {/* Barra superior */}
-      <div className="bg-green-600 text-white text-center py-2">
+      <div style={{ backgroundColor: '#1ab25a' }} className="text-white text-center py-2">
         <p className="text-[16px] font-medium">Delivery a todo el Perú</p>
       </div>
 
@@ -759,7 +759,7 @@ export default function Header() {
                 
                 {/* Elemento Promociones destacado al final */}
                 <li>
-                  <Link href="/promociones" className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md transition-colors flex items-center gap-1">
+                  <Link href="/promociones" style={{ backgroundColor: '#1ab25a' }} className="hover:bg-green-600 text-white px-4 py-1.5 rounded-md transition-colors flex items-center gap-1">
                     <span>Promociones</span>
                   </Link>
                 </li>
