@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@babel/runtime": "^7.27.6",
+    "@babel/runtime-corejs3": "^7.27.6",
+    "regenerator-runtime": "^0.14.1",
     "framer-motion": "^12.19.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.513.0",
@@ -20,7 +23,6 @@
     "swiper": "^11.2.8"
   },
   "devDependencies": {
-    "@babel/runtime": "^7.27.6",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

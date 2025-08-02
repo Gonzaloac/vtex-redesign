@@ -16,16 +16,24 @@ interface Product {
 }
 
 const products: Product[] = [
-  { id: 1, title: 'Citrato de Magnesio Smart Blends 400gr', subtitle: 'Smartblend', price: 84.9, image: '/Citrato-Recomendado-1.png' },
-  { id: 2, title: 'Ashwagandha 60 Caps Vegana', subtitle: 'Herbals & Health', price: 69.9, image: '/161711-1200-auto.png' },
-  { id: 3, title: 'Resveratrol BioCenter 100 Caps', subtitle: 'BioCenter', price: 72.9, image: '/REVERATROL-CAP.png' },
-  { id: 4, title: 'Fish Oil (Omega-3) 1000mg', subtitle: 'Organa', price: 196, image: '/Fish-Oil-Recomendado-1.png' },
-  { id: 5, title: 'Melena de León Mush Organics 60caps', subtitle: 'Mush Organics', price: 75.65, image: '/162494-1200-auto.png', discount: 15 },
-  { id: 6, title: 'HGH Releasing Xtralife 120tab', subtitle: 'xtralife', price: 178, image: '/162206-1200-auto.png' },
-  { id: 7, title: 'Anxiety (Ashwagandha+Rhodiola) 60caps', subtitle: 'xtralife', price: 99, image: '/162193-1200-auto.png' },
-  { id: 8, title: 'Citrato de Magnesio Smart Blends 200gr', subtitle: 'Smartblend', price: 44.9, image: '/162143-1200-auto.png' },
- // { id: 9, title: 'Glicinato de Magnesio 120 caps', subtitle: 'Nature\'s Truth', price: 139.9, image: '/162631-1200-auto.png' },
- // { id: 10, title: 'Co Q-10 Vitamin E & Omega-3', subtitle: 'Mason Naturals', price: 146, image: '/162886-1200-auto.png' },
+  { id: 1, title: 'VITAMINA B12 SUBLINGUAL SUNDOWN 5000 MCG', subtitle: 'Sundown', price: 150.00, image: '/vitamina-b12-sundown.png' },
+  { id: 2, title: 'COMPLEJO B SOLGAR 100 TABLETAS', subtitle: 'Solgar', price: 129.00, image: '/complejo-b-solgar.png' },
+  { id: 3, title: 'VITAMINA B12 SUBLINGUAL 1000 MCG SOLGAR', subtitle: 'Solgar', price: 209.00, image: '/vitamina-b12-solgar.png' },
+  { id: 4, title: 'MAGNESIO CON VITAMINA B6 SOLGAR 100 TAB', subtitle: 'Solgar', price: 99.00, image: '/magnesio-b6-solgar.png' },
+  { id: 5, title: 'VITAMINA B12 1000MG MASON NATURALS 100 TAB', subtitle: 'Mason Naturals', price: 105.50, image: '/vitamina-b12-mason.png' },
+  { id: 6, title: 'VITAMINA ULTRA B12 NOW 5000MCG', subtitle: 'Now Foods', price: 140.00, image: '/vitamina-ultra-b12-now.png' },
+  { id: 7, title: 'COMPLEJO B CON ELECTROLITOS MASON NATURALS 50 TAB', subtitle: 'Mason Naturals', price: 74.90, image: '/complejo-b-electrolitos-mason.png' },
+  { id: 8, title: 'MELATONINA+ VITAMINA B6 SOLUCION ORAL DRASANVI 50 ML', subtitle: 'Drasanvi', price: 44.90, image: '/melatonina-b6-drasanvi.png' },
+  { id: 9, title: 'Citrato de Magnesio Smart Blends 400gr', subtitle: 'Smartblend', price: 84.9, image: '/Citrato-Recomendado-1.png' },
+  { id: 10, title: 'Ashwagandha 60 Caps Vegana', subtitle: 'Herbals & Health', price: 69.9, image: '/161711-1200-auto.png' },
+  { id: 11, title: 'Resveratrol BioCenter 100 Caps', subtitle: 'BioCenter', price: 72.9, image: '/REVERATROL-CAP.png' },
+  { id: 12, title: 'Fish Oil (Omega-3) 1000mg', subtitle: 'Organa', price: 196, image: '/Fish-Oil-Recomendado-1.png' },
+  { id: 13, title: 'Melena de León Mush Organics 60caps', subtitle: 'Mush Organics', price: 75.65, image: '/162494-1200-auto.png', discount: 15 },
+  { id: 14, title: 'HGH Releasing Xtralife 120tab', subtitle: 'xtralife', price: 178, image: '/162206-1200-auto.png' },
+  { id: 15, title: 'Anxiety (Ashwagandha+Rhodiola) 60caps', subtitle: 'xtralife', price: 99, image: '/162193-1200-auto.png' },
+  { id: 16, title: 'Citrato de Magnesio Smart Blends 200gr', subtitle: 'Smartblend', price: 44.9, image: '/162143-1200-auto.png' },
+ // { id: 17, title: 'Glicinato de Magnesio 120 caps', subtitle: 'Nature\'s Truth', price: 139.9, image: '/162631-1200-auto.png' },
+ // { id: 18, title: 'Co Q-10 Vitamin E & Omega-3', subtitle: 'Mason Naturals', price: 146, image: '/162886-1200-auto.png' },
 ]
 
 // Calcula el precio con descuento si aplica
